@@ -1,7 +1,7 @@
 // src/components/custom/LoginPage.jsx
 
 import React, { useState } from "react";
-import { useNavigate,useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import {
   Card,
@@ -12,25 +12,46 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
+
+import { db } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 const LoginPage = () => {
-const [phone, setPhone] = useState("");
-const [name, setName] = useState("");
-const [address, setAddress] = useState("");
-const [pincode, setPincode] = useState("");
-const navigate = useNavigate();
-const location = useLocation();
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
 
-
-const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(`Saving user details...{name, phone, address, pincode}`)
-    const from = location.state?.from || "/"
-navigate(from);
-};
 
-return (
+    try {
+      // Add a new document to the "orders" collection
+      const docRef = await addDoc(collection(db, "orders"), {
+        name: name,
+        phone: phone,
+        address: address,
+        pincode: pincode,
+        createdAt: new Date(),
+      }); 
+      console.log("Document written with ID: ", docRef.id);
+
+      localStorage.setItem(
+        "userProfile",
+        JSON.stringify({ name, phone, address, pincode })
+      );
+
+      const from = location.state?.from || "/";
+      navigate(from);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+  };
+
+  return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
@@ -89,6 +110,6 @@ return (
       </Card>
     </div>
   );
-}
+};
 
 export default LoginPage;

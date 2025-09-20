@@ -6,7 +6,7 @@ import Careers from "./pages/careers/Careers";
 import Shop from "./pages/shop/Shop";
 import "./App.css";
 import LoginPage from "./components/custom/LoginPage";
-import ProductDetails from "./pages/shop/ProductDetails/ProuctDetails";
+import ProductPage from "./pages/shop/Product/ProuctPage";
 import {
   BrowserRouter as Router,
   Routes,
@@ -26,7 +26,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<Shop />} />
-        <Route path="/shop/:productId" element={<ProductDetails />}></Route>
+        <Route path="/shop/:productId" element={<ProductPage />}></Route>
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
