@@ -7,15 +7,11 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import { db } from "@/firebase";
-import { collection, addDoc } from "firebase/firestore";
 
 const LoginPage = () => {
   const [phone, setPhone] = useState("");
@@ -28,28 +24,23 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      // Add a new document to the "orders" collection
-      const docRef = await addDoc(collection(db, "orders"), {
-        name: name,
-        phone: phone,
-        address: address,
-        pincode: pincode,
-        createdAt: new Date(),
-      }); 
-      console.log("Document written with ID: ", docRef.id);
-
+      try {
+      // 1. SAVE PROFILE TO LOCAL STORAGE
       localStorage.setItem(
         "userProfile",
         JSON.stringify({ name, phone, address, pincode })
       );
+      console.log("User details saved to Local Storage.");
 
+      // 2. REDIRECT
       const from = location.state?.from || "/";
       navigate(from);
     } catch (e) {
-      console.error("Error adding document: ", e);
+      console.error("Error saving document or navigating: ", e);
+      // Optional: Add state to show an error message to the user
     }
   };
+
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">

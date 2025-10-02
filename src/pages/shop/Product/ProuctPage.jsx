@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
 import { db } from "@/firebase";
 import { doc, getDoc } from "firebase/firestore";
-
 import { Separator } from "@radix-ui/react-separator";
 import VariantSelector from "./VariantSelector";
-
 import ProductImageGallery from "@/components/ProductImageGallery";
 import ProductReviews from "./ProductReviewes";
 import ProductInfo from "./ProductInfo";
@@ -71,30 +68,32 @@ const ProductPage = () => {
             productName={selectedVariant.name}
           />
         </div>
-                 {/* Variant Selector */}
-      {product.variants && (
-        <div className="mt-4">
-          <VariantSelector
-            variants={product.variants}
-            activeVariant={selectedVariant}
-            onSelect={setSelectedVariant}
-          />
-        </div>
-      )}
 
-        {/* All product info, prices, and buttons are now in this component */}
+        {/* Variant Selector */}
+        {product.variants && (
+          <div className="mt-4">
+            <VariantSelector
+              variants={product.variants}
+              activeVariant={selectedVariant}
+              onSelect={setSelectedVariant}
+            />
+          </div>
+        )}
+
+        {/* Product info, prices, and actions */}
         <ProductInfo
           product={product}
           selectedVariant={selectedVariant}
           setSelectedVariant={setSelectedVariant}
         />
       </div>
+
       <Separator className="my-12" />
-      <ProductDetails product={product}/>
-      <Separator className="m-12"/>
+      <ProductDetails product={product} />
+      <Separator className="m-12" />
       <ProductReviews />
     </div>
   );
 };
 
-export default ProductPage
+export default ProductPage;

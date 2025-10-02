@@ -4,6 +4,7 @@ import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
 import Careers from "./pages/careers/Careers";
 import Shop from "./pages/shop/Shop";
+import CheckoutPage from "./pages/checkout/CheckoutPage";
 import "./App.css";
 import LoginPage from "./components/custom/LoginPage";
 import ProductPage from "./pages/shop/Product/ProuctPage";
@@ -13,6 +14,8 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
+import CartSidebar from "./components/CartSidebar";
+import { db } from "./firebase"; 
 
 const AppContent = () => {
   const location = useLocation();
@@ -23,6 +26,7 @@ const AppContent = () => {
   return (
     <>
       {showNavbar && <Navbar />}
+      <CartSidebar/>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<Shop />} />
@@ -31,6 +35,7 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/Login" element={<LoginPage />} />
+        <Route path="/checkout" element={<CheckoutPage db={db}/>}/>
       </Routes>
     </>
   );

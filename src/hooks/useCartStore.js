@@ -3,7 +3,15 @@
 import { create } from "zustand";
 
 export const useCartStore = create((set, get) => ({
+  isCartOpen: false,
+
   cartItems: [],
+
+  toggleCart: (open) => {
+    set((state) => ({
+      isCartOpen: typeof open === "boolean" ? open : !state.isCartOpen,
+    }));
+  },
 
   addItem: (product) => {
     const existingItem = get().cartItems.find((item) => item.id === product.id);
@@ -38,6 +46,12 @@ export const useCartStore = create((set, get) => ({
         cartItems: state.cartItems.filter((item) => item.id !== productId),
       }));
     }
+  },
+
+  deleteItem: (productId) => {
+    set((state)=>({
+      cartItems: state.cartItems.filter((item)=> item.id !== productId)
+    }))
   },
 
   clearCart: () => {

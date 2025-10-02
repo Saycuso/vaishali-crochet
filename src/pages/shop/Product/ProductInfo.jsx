@@ -1,14 +1,33 @@
 import { Button } from "@/components/ui/button";
-
 import { useCartStore } from "@/hooks/useCartStore";
 
 const ProductInfo = ({ product, selectedVariant }) => {
+  
   const addItem = useCartStore((state) => state.addItem);
+  const toggleCart = useCartStore((state)=> state.toggleCart)
+
+  if(!product || !selectedVariant){
+    return null
+  }
 
   const handleAddToCart = () => {
-    addItem({ ...product, ...selectedVariant });
-    console.log("Item added to cart: ", product.name);
+    const itemToAdd = {
+      ...product,
+      ...selectedVariant,
+      id: selectedVariant.id || product.id
+    }
+    addItem(itemToAdd);
+    toggleCart(true)
+    console.log(`Added 1 of ${selectedVariant.name} (ID: ${itemToAdd.id}) to cart.`)
   };
+  
+  const currentPrice = selectedVariant.price;
+  const originalprice = product.originalprice
+
+  // Safely calculate the discount percentage
+  const discountPercentage = originalprice && currentPrice
+    ? Math.round( -((originalprice - currentPrice) / originalprice) * 100 )
+    : null;
 
   return (
     <div className="flex-1 flex flex-col justify-between mt-7">
@@ -16,33 +35,27 @@ const ProductInfo = ({ product, selectedVariant }) => {
         <h1 className="text-xl md:text-4xl font-semibold text-gray-900 text-left">
           {product.name}
         </h1>
+
         {/* Price Section */}
         <div className="mt-3 flex items-baseline gap-2">
           {product.originalprice && (
             <div className="flex-col flex items-baseline gap-2">
               <span className="text-4xl font-semibold text-red-600">
-                {Math.round(
-                  -(
-                    (product.originalprice - selectedVariant.price) /
-                    product.originalprice
-                  ) * 100
-                )}
+                {discountPercentage}
                 %
               </span>
               <span className="text-m text-gray-500 line-through">
-                M.R.P.: ₹{product.originalprice}
+                M.R.P.: ₹{originalprice}
               </span>
             </div>
           )}
+
           <div className="relative inline-block">
-            {/* ₹ symbol positioned absolutely */}
             <span className="absolute bottom-3 left-0 text-sm md:text-base font-bold text-green-600">
               ₹
             </span>
-
-            {/* Price with left padding so ₹ doesn’t overlap */}
             <span className="text-4xl md:text-4xl font-semibold text-green-600 pl-3">
-              {selectedVariant?.price}
+              {currentPrice}
             </span>
           </div>
         </div>
