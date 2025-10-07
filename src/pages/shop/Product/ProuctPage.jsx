@@ -32,7 +32,7 @@ const ProductPage = () => {
           } else {
             setSelectedVariant({
               name: productData.name,
-              images: productData.name,
+              images: productData.images,
               price: productData.price,
             });
           }

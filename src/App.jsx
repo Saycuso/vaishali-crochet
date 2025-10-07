@@ -4,6 +4,7 @@ import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
 import Careers from "./pages/careers/Careers";
 import Shop from "./pages/shop/Shop";
+import OrderSuccessPage from "./pages/checkout/OrderSuccessPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import "./App.css";
 import LoginPage from "./components/custom/LoginPage";
@@ -15,7 +16,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import CartSidebar from "./components/CartSidebar";
-import { db } from "./firebase"; 
+import { db } from "./firebase";
 
 const AppContent = () => {
   const location = useLocation();
@@ -26,7 +27,7 @@ const AppContent = () => {
   return (
     <>
       {showNavbar && <Navbar />}
-      <CartSidebar/>
+      <CartSidebar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<Shop />} />
@@ -34,8 +35,12 @@ const AppContent = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
+        <Route
+          path="/order-success/:orderId"
+          element={<OrderSuccessPage />} // 👈 This page handles the redirect URL
+        />
         <Route path="/Login" element={<LoginPage />} />
-        <Route path="/checkout" element={<CheckoutPage db={db}/>}/>
+        <Route path="/checkout" element={<CheckoutPage db={db} />} />
       </Routes>
     </>
   );

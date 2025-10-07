@@ -4,6 +4,7 @@ import { useCartStore } from "@/hooks/useCartStore";
 import { Button } from "@/components/ui/button";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { calculateSubTotal } from "@/lib/cartUtils";
+import RazorpayInitiator from "@/components/paytm/RazorPayInitiator";
 
 const SHIPPING_COST = 50.0;
 
@@ -28,7 +29,6 @@ const CheckoutPage = ({ db }) => {
 
   const cartItems = useCartStore((state) => state.cartItems);
   const clearCart = useCartStore((state) => state.clearCart);
-
   const subtotal = calculateSubTotal(cartItems);
   const totalAmount = subtotal + SHIPPING_COST;
 
@@ -60,10 +60,8 @@ const CheckoutPage = ({ db }) => {
   }, [isProfileCheckComplete, customerInfo, cartItems, subtotal, navigate]);
 
   // --- HANDLER: PLACE ORDER ---
-  const handlePlaceOrder = async (e) => {
-    e.preventDefault();
+  const handleSaveOrderToDb = async (currentCustomerInfo) => {
     setOrderError(null);
-    setIsProcessing(true);
 
     if (cartItems.length === 0) {
       setOrderError("Cart is empty.");
@@ -79,10 +77,10 @@ const CheckoutPage = ({ db }) => {
     }
     const orderData = {
       customer: {
-        fullName: customerInfo.name,
-        phoneNo: customerInfo.phone,
-        pincode: customerInfo.pincode,
-        address: customerInfo.address,
+        fullName: currentCustomerInfo.name,
+        phoneNo: currentCustomerInfo.phone,
+        pincode: currentCustomerInfo.pincode,
+        address: currentCustomerInfo.address,
       },
       items: cartItems.map((item) => ({
         id: item.id,
@@ -102,21 +100,24 @@ const CheckoutPage = ({ db }) => {
 
     try {
       const docRef = await addDoc(collection(db, "orders"), orderData);
-      // 3. **Initiate Payment/Clear Cart**
-      // *** THIS IS WHERE PAYTM CHECK SUM GENERATION/API CALL WOULD START ***
-
-      // Mocking a successful payment flow for now:
-
-      alert(`Order Saved! (ID: ${docRef.id}).  Processing to Paytm...`);
-      clearCart();
-      // navigate(`/order-success/${docRef.id}`);
+      return {
+        orderId: docRef.id,
+        orderData: orderData,
+        // The phone is needed by the backend for CUST_ID
+        customerPhone: customerInfo.phone,
+      };
     } catch (e) {
       console.error("Error placing order:", e);
-      setOrderError("Failed to place order. Please try again");
-    } finally {
-      setIsProcessing(false);
+      setOrderError("Failed to save order to database.");
+      throw e;
     }
   };
+  const handleOrderSuccess = (firebaseOrderId, paymentId) => {
+    clearCart(); 
+    // Use navigate for clean React routing
+    navigate(`/order-success/${firebaseOrderId}?status=success&paymentId=${paymentId}`);
+};
+
 
   // Show loading/redirect state until the profile check is complete
   if (!isProfileCheckComplete) {
@@ -196,16 +197,17 @@ const CheckoutPage = ({ db }) => {
 
             {/* PAYMENT BUTTON */}
             <div className="pt-6 border-t mt-6">
-              <Button
-                onClick={handlePlaceOrder} // No form needed, just a button click
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white shadow-lg transition-all duration-200 py-3 text-lg"
-                size="lg"
-                disabled={isProcessing}
-              >
-                {isProcessing
-                  ? "Saving Order..."
-                  : `Place Order and Pay ₹${totalAmount.toFixed(2)}`}
-              </Button>
+              <RazorpayInitiator
+                totalAmount={totalAmount}
+                customerPhone={customerInfo.phone}
+                onSaveOrderToDb={()=> handleSaveOrderToDb(customerInfo)} // Pass the new save function
+                onOrderError={setOrderError}
+                clearCart={clearCart} // Pass the function to clear the cart AFTER success
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                customerInfo={customerInfo}
+                onOrderSuccess={handleOrderSuccess}
+              />
             </div>
           </div>
 
