@@ -91,7 +91,8 @@ const ProductPage = () => {
       <Separator className="my-12" />
       <ProductDetails product={product} />
       <Separator className="m-12" />
-      <ProductReviews />
+      <ProductReviews 
+      productId={productId}/>
     </div>
   );
 };

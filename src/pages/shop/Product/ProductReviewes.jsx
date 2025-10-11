@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { CardContent, Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"; // Using Textarea for comment
+import { Input } from "@/components/ui/input"; // Assuming you have an Input component
 import { db } from "@/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -9,10 +10,11 @@ import { useNavigate } from "react-router-dom";
 // Helper function to read customer info from local storage
 const getCustomerNameFromLocalStorage = () => {
   try {
-    const customerInfo = localStorage.getItem("customerInfo");
+    const customerInfo = localStorage.getItem("userProfile");
     if (customerInfo) {
-      const { fullName } = JSON.parse(customerInfo);
-      return fullName || null; // Return the name if it exists, otherwise null
+      // NOTE: Using Session Storage is recommended for security!
+      const { name } = JSON.parse(customerInfo);
+      return name || null; // Return the name if it exists, otherwise null
     }
     return null;
   } catch (error) {
@@ -25,24 +27,23 @@ const getCustomerNameFromLocalStorage = () => {
 const ProductReviewSection = ({ productId }) => {
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
+  const [newReviewTitle, setNewReviewTitle] = useState(""); // <-- NEW STATE FOR TITLE
   const [newReviewText, setNewReviewText] = useState("");
-  const [rating, setRating] = useState(5); // Default to 5 stars
+  const [rating, setRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reviewerName, setReviewerName] = useState(null); // Will hold the name from local storage
+  const [reviewerName, setReviewerName] = useState(null);
 
   // --- 1. FETCH EXISTING REVIEWS ---
   useEffect(() => {
-    // Also check for the reviewer's name when the component mounts
     setReviewerName(getCustomerNameFromLocalStorage());
 
     const fetchReviews = async () => {
       if (!productId) return;
       try {
         const reviewsRef = collection(db, "reviews");
-        // Query reviews where the productId matches the current product
         const q = query(reviewsRef, where("productId", "==", productId));
         const snapshot = await getDocs(q);
-        
+
         const fetchedReviews = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
@@ -59,14 +60,15 @@ const ProductReviewSection = ({ productId }) => {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
 
-    // A. Check for Name: If the name is null, redirect them to the details page.
+    // A. Check for Name:
     if (!reviewerName) {
       alert("Please enter your details first to submit a review.");
-      navigate("/login"); // Assuming your details page is at /login
+      // NOTE: You are navigating to /login, but your details page is likely /checkout
+      navigate("/login"); 
       return;
     }
-    if (!newReviewText.trim() || rating < 1 || rating > 5) {
-      alert("Please provide a rating and a comment.");
+    if (!newReviewTitle.trim() || !newReviewText.trim() || rating < 1 || rating > 5) {
+      alert("Please provide a title, rating, and a comment.");
       return;
     }
 
@@ -74,11 +76,12 @@ const ProductReviewSection = ({ productId }) => {
     try {
       const newReview = {
         productId,
-        reviewerName, // The name pulled from local storage
+        reviewerName,
         rating,
+        title: newReviewTitle.trim(), // <-- ADDED TITLE
         comment: newReviewText.trim(),
         createdAt: serverTimestamp(),
-        isVerified: false, // Always false for our anonymous system
+        isVerified: false,
       };
 
       const reviewsRef = collection(db, "reviews");
@@ -86,11 +89,12 @@ const ProductReviewSection = ({ productId }) => {
 
       // Add the new review to the state array for instant display
       setReviews(prev => [
-        { ...newReview, id: docRef.id, createdAt: new Date() }, // Use new Date() for immediate display
+        { ...newReview, id: docRef.id, createdAt: new Date() },
         ...prev,
       ]);
 
-      setNewReviewText(""); // Clear the form
+      setNewReviewTitle(""); // Clear the title field
+      setNewReviewText("");
       setRating(5);
       alert("Review submitted successfully!");
 
@@ -109,7 +113,8 @@ const ProductReviewSection = ({ productId }) => {
       <h2 className="text-2xl md:text-3xl font-bold">Customer Reviews</h2>
 
       {/* --- WRITE A REVIEW FORM --- */}
-      <Card className="p-6">
+      {/* ADDED BORDER AND PADDING TO THE CARD HERE, as requested earlier */}
+      <Card className="p-6 border border-gray-300 rounded-lg shadow-sm">
         <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
         <form onSubmit={handleSubmitReview} className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -118,7 +123,7 @@ const ProductReviewSection = ({ productId }) => {
               {reviewerName || "Redirecting to Details..."}
             </span>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <label className="font-medium">Rating:</label>
             <div className="flex space-x-1">
@@ -136,14 +141,29 @@ const ProductReviewSection = ({ productId }) => {
             </div>
           </div>
           
+          {/* <-- NEW REVIEW TITLE INPUT FIELD --> */}
+          <div>
+            <label htmlFor="review-title" className="sr-only">Review Title</label>
+            <input // Using a standard input for the short title
+              id="review-title"
+              type="text"
+              placeholder="Give your review a title (e.g., 'Loved It!')"
+              value={newReviewTitle}
+              onChange={(e) => setNewReviewTitle(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              required
+              maxLength={100} // Optional: Limit title length
+            />
+          </div>
+          
           <Textarea
-            placeholder="Share your thoughts on the product..."
+            placeholder="Share your detailed thoughts on the product..."
             value={newReviewText}
             onChange={(e) => setNewReviewText(e.target.value)}
             rows={4}
             required
           />
-          
+
           <Button type="submit" disabled={isSubmitting} className="bg-orange-600 hover:bg-orange-700">
             {isSubmitting ? "Submitting..." : "Submit Review"}
           </Button>
@@ -153,20 +173,26 @@ const ProductReviewSection = ({ productId }) => {
       {/* --- DISPLAY EXISTING REVIEWS --- */}
       <div className="space-y-6 pt-4 border-t border-gray-200">
         {reviews.length === 0 && <p className="text-gray-500">Be the first to leave a review!</p>}
-        
+
         {reviews.map((review) => (
           <Card key={review.id}>
             <CardContent className="p-6 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold">{review.reviewerName || "Anonymous"}</span>
+              <div className="flex justify-between items-center mb-1">
+                {/* <-- DISPLAY NEW TITLE PROMINENTLY --> */}
+                <h4 className="text-lg font-bold text-gray-900">
+                    {review.title}
+                </h4>
                 <span className="text-yellow-500">
                   {"★".repeat(review.rating) + "☆".repeat(5 - review.rating)}
                 </span>
               </div>
-              <p className="text-gray-700">{review.comment}</p>
-              <p className="text-xs text-gray-400">
-                {review.createdAt && review.createdAt.toDate ? review.createdAt.toDate().toLocaleDateString() : 'Just Now'}
-              </p>
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <span className="font-semibold text-gray-700">{review.reviewerName || "Anonymous"}</span>
+                <p className="text-xs">
+                  {review.createdAt && review.createdAt.toDate ? review.createdAt.toDate().toLocaleDateString() : 'Just Now'}
+                </p>
+              </div>
+              <p className="text-gray-700 mt-2">{review.comment}</p>
             </CardContent>
           </Card>
         ))}

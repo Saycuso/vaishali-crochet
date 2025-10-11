@@ -3,6 +3,7 @@ import Navbar from "./components/custom/Navbar"; // Your new Navbar component
 import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
 import Careers from "./pages/careers/Careers";
+import OrdersAndTracking from "./pages/orders/orders";
 import Shop from "./pages/shop/Shop";
 import OrderSuccessPage from "./pages/checkout/OrderSuccessPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
@@ -35,6 +36,7 @@ const AppContent = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
+        <Route path="/ordersandtracking" element={<OrdersAndTracking/>}></Route>
         <Route
           path="/order-success/:orderId"
           element={<OrderSuccessPage />} // 👈 This page handles the redirect URL

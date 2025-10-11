@@ -21,6 +21,7 @@ const Navbar = () => {
     { name: "About", path: "/about" },
     { name: "Careers", path: "/careers" },
     { name: "Contact", path: "/contact" },
+    { name: "Orders And Tracking", path: "/ordersandtracking"},
   ];
 
   return (
@@ -30,7 +31,7 @@ const Navbar = () => {
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="compact">
+              <Button variant="outline" size="compact" className="ml-1">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -114,7 +115,7 @@ const Navbar = () => {
             </Button>
           </Link>
           <Link to="/cart">
-            <Button variant="outline" size="compact">
+            <Button variant="outline" size="compact" className="mr-1">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"

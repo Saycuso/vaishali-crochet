@@ -65,14 +65,14 @@ const ProductInfo = ({ product, selectedVariant }) => {
       <div className="flex-col flex gap-4 mt-8">
         <Button
           onClick={handleAddToCart}
-          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+          className="flex-1 p-2 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white"
           size="lg"
         >
           Add to Cart
         </Button>
         <Button
           variant="outline"
-          className="flex-1 border-orange-600 text-orange-600 hover:bg-orange-100"
+          className="flex-1 p-2 rounded-2xl border-orange-600 text-orange-600 hover:bg-orange-100"
           size="lg"
         >
           Buy Now

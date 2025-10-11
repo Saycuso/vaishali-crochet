@@ -118,3 +118,34 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ---------------------------------- */
+/* --- React Transition Group CSS --- */
+/* ---------------------------------- */
+
+/* Applies BEFORE the component enters (starting state) */
+.component-fade-enter {
+  opacity: 0;
+  transform: translateY(20px); /* Start 20px lower */
+}
+
+/* Applies DURING the component's entry transition */
+.component-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  /* CRITICAL: Defines the duration and easing for the animation */
+  transition: opacity 500ms ease-out, transform 500ms ease-out; 
+}
+
+/* Applies DURING the component's exit transition */
+.component-fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Applies AFTER the component exits (ending state) */
+.component-fade-exit-active {
+  opacity: 0;
+  transform: translateY(-20px); /* Move 20px up while fading out */
+  transition: opacity 300ms ease-in, transform 300ms ease-in;
+}

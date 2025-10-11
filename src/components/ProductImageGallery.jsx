@@ -81,12 +81,14 @@ const ProductImageGallery = ({ images, productName }) => {
                     activeImage === image ? "border-2 border-orange-500" : ""
                   }`}
                 >
-                  <CardContent className="flex  **aspect-square** items-center justify-center p-0">
+                  <CardContent className="flex items-center justify-center p-0">
+                    <div className=" flex items-center justify-center overflow-hidden rounded-md bg-white">
                     <img
                       src={image}
                       alt={`Thumbnail ${index + 1}`}
-                      className="w-[80px] h-[80px]  object-cover"
+                        className="object-cover aspect-square"
                     />
+                    </div>
                   </CardContent>
                 </Card>
               </div>

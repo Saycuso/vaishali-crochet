@@ -30,7 +30,7 @@ const CustomAccordion = ({ items }) => {
               // Correct onClick syntax using an arrow function
               onClick={() => handleToggle(index)}
             >
-              <span className="text-lg font-semibold">{item.title}</span>
+              <span className="text-md font-semibold">{item.title}</span>
               <ChevronDownIcon
                 className={`size-5 transition-transform duration-200 ${
                   isClosed ? "" : "rotate-180" // Rotate the icon when it's open
@@ -41,7 +41,7 @@ const CustomAccordion = ({ items }) => {
             {/* Accordion Content */}
             {!isClosed && ( // Render if the item is NOT closed
               <div className="overflow-hidden">
-                <div className="py-4 text-gray-700">{item.content}</div>
+                <div className="py-0 text-gray-700">{item.content}</div>
               </div>
             )}
           </div>
