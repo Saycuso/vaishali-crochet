@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration from your Firebase project settings
 // Use environment variables for security
@@ -14,8 +15,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore and export it
 const db = getFirestore(app);
+const auth = getAuth(app);
+export { app, db, auth};
 
-export { app, db };

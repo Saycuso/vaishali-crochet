@@ -22,6 +22,7 @@ const Navbar = () => {
     { name: "Careers", path: "/careers" },
     { name: "Contact", path: "/contact" },
     { name: "Orders And Tracking", path: "/ordersandtracking"},
+    {name: "Logout", path:"/logout"}
   ];
 
   return (
@@ -93,9 +94,9 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Login and Cart on the right */}
+        {/* DetailsPage and Cart on the right */}
         <div className="flex gap-1 items-center">
-          <Link to="/login">
+          <Link to="/detailspage">
             <Button variant="outline" size="compact">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

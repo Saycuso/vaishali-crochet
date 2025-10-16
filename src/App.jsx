@@ -7,9 +7,12 @@ import OrdersAndTracking from "./pages/orders/orders";
 import Shop from "./pages/shop/Shop";
 import OrderSuccessPage from "./pages/checkout/OrderSuccessPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
+import Login from "./components/custom/Login";
+import Signup from "./components/custom/Signup";
 import "./App.css";
-import LoginPage from "./components/custom/LoginPage";
+import DetailsPage from "./components/custom/DetailsPage";
 import ProductPage from "./pages/shop/Product/ProuctPage";
+import Logout from "./components/custom/Logout";
 import {
   BrowserRouter as Router,
   Routes,
@@ -31,17 +34,23 @@ const AppContent = () => {
       <CartSidebar />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/logout" element={<Logout />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/shop/:productId" element={<ProductPage />}></Route>
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
-        <Route path="/ordersandtracking" element={<OrdersAndTracking/>}></Route>
+        <Route path="/login" element={<Login />}></Route>
+        <Route path="/signup" element={<Signup />}></Route>
+        <Route
+          path="/ordersandtracking"
+          element={<OrdersAndTracking />}
+        ></Route>
         <Route
           path="/order-success/:orderId"
           element={<OrderSuccessPage />} // 👈 This page handles the redirect URL
         />
-        <Route path="/Login" element={<LoginPage />} />
+        <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />
       </Routes>
     </>

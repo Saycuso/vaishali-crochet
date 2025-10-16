@@ -63,8 +63,8 @@ const ProductReviewSection = ({ productId }) => {
     // A. Check for Name:
     if (!reviewerName) {
       alert("Please enter your details first to submit a review.");
-      // NOTE: You are navigating to /login, but your details page is likely /checkout
-      navigate("/login"); 
+      // NOTE: You are navigating to /detailspage, but your details page is likely /checkout
+      navigate("/detailspage"); 
       return;
     }
     if (!newReviewTitle.trim() || !newReviewText.trim() || rating < 1 || rating > 5) {
