@@ -29,7 +29,7 @@ const createRazorpayOrder = async (orderPayload, totalAmount) => {
       amount: totalAmount.toFixed(2),
       currency: "INR", 
       receipt: orderPayload.orderId, // Firebase ID
-      customerPhone: orderPayload.customer.phoneNo,
+      customerPhone: orderPayload.customerInfo.phone,
     }),
   });
 
@@ -97,6 +97,7 @@ const RazorpayInitiator = ({
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
               firebaseOrderId: firebaseOrderId, // Your internal reference
+              customerEmail: customerInfo.email,
           };
 
           try {
@@ -111,7 +112,7 @@ const RazorpayInitiator = ({
               if (verificationResult.verified) {
                   // Payment is PROVEN legit! ✅
                   console.log(`Payment Verified! Order: ${firebaseOrderId}`);
-                   onOrderSuccess()
+                   onOrderSuccess(firebaseOrderId, verificationData.paymentId);
               } else {
                   // FAILED: The signature check failed. Potential fraud!
                   console.error("Payment FAILED SERVER VERIFICATION!");
@@ -126,8 +127,8 @@ const RazorpayInitiator = ({
           }
         },
         prefill: {
-          name: customerInfo.fullName || orderPayload.customer.fullName,
-          contact: customerInfo.phoneNo || orderPayload.customer.phoneNo,
+          name: customerInfo?.fullName || orderPayload.customerInfo?.fullName,
+          contact: customerInfo?.phone || orderPayload.customerInfo?.phone,
         },
         theme: {
           color: "#ea580c", // Tailwind orange-600

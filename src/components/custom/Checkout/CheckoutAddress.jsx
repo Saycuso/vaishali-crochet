@@ -21,11 +21,11 @@ const CheckoutAddress = ({
 
       <div className="space-y-4">
         <p className="text-lg font-bold text-gray-900">
-          {customerInfo.name}
+          {customerInfo?.name}
         </p>
-        <p className="text-gray-700">{customerInfo.address}</p>
-        <p className="text-gray-700">Pincode: {customerInfo.pincode}</p>
-        <p className="text-gray-700">Phone: {customerInfo.phone}</p>
+        <p className="text-gray-700">{customerInfo?.address}</p>
+        <p className="text-gray-700">Pincode: {customerInfo?.pincode}</p>
+        <p className="text-gray-700">Phone: {customerInfo?.phone}</p>
 
         <Button
           variant="link"

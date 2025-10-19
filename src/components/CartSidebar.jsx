@@ -191,7 +191,6 @@ const CartSidebar = () => {
               className="w-full bg-orange-600 hover:bg-orange-700 text-white shadow-lg"
               size="lg"
               disabled={cartItems.length === 0}
-              // TODO: Implement navigation to /checkout or call checkout initiation function
               onClick={handleCheckoutClick}
             >
               Proceed to Checkout
