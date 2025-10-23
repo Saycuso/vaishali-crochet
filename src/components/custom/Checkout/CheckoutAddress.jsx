@@ -12,6 +12,8 @@ const CheckoutAddress = ({
   setIsProcessing,
   setOrderError,
   isProcessing,
+  userId,
+  appId
 }) => {
   return (
     <div className="md:w-3/5 bg-white p-6 rounded-xl shadow-lg h-fit">
@@ -56,6 +58,8 @@ const CheckoutAddress = ({
           setIsProcessing={setIsProcessing}
           customerInfo={customerInfo}
           onOrderSuccess={handleOrderSuccess}
+          userId = {userId}
+          appId = {appId}
         />
       </div>
     </div>

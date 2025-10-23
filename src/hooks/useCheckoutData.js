@@ -40,6 +40,7 @@ export const useCheckoutLogic = ({ db }) => {
   // State Management
   const [customerInfo, setCustomerInfo] = useState(null);
   const [user, setUser] = useState(null);
+  const [userId, setUserId] = useState(null)
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderError, setOrderError] = useState(null);
@@ -85,11 +86,12 @@ export const useCheckoutLogic = ({ db }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-
-      if (currentUser) {
+      if (currentUser && currentUser.uid) {
         checkProfileStatus(currentUser);
+        setUserId(currentUser.uid);
       } else {
         setUser(null);
+        setUserId(null)
         if (cartItems.length > 0) {
           console.log("User not authenticated. Redirecting to login.");
           setIsLoading(false);
@@ -113,7 +115,7 @@ export const useCheckoutLogic = ({ db }) => {
     }
 
     const orderData = {
-      userId: user.uid,
+      userId: userId,
       items: cartItems.map((item) => ({
         id: item.id,
         name: item.name,
@@ -156,6 +158,7 @@ export const useCheckoutLogic = ({ db }) => {
   return {
     // State
     isLoading,
+    userId,
     user,
     customerInfo,
     cartItems,
@@ -163,6 +166,7 @@ export const useCheckoutLogic = ({ db }) => {
     totalAmount,
     isProcessing,
     orderError,
+    appId,
     // Handlers
     navigate,
     setOrderError,

@@ -3,7 +3,6 @@ import Navbar from "./components/custom/Navbar"; // Your new Navbar component
 import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
 import Careers from "./pages/careers/Careers";
-import OrdersAndTracking from "./pages/orders/OrdersAndTracking";
 import Shop from "./pages/shop/Shop";
 import OrderSuccessPage from "./pages/checkout/OrderSuccessPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
@@ -13,7 +12,8 @@ import "./App.css";
 import DetailsPage from "./components/custom/DetailsPage";
 import ProductPage from "./pages/shop/Product/ProuctPage";
 import CartSync from "./components/custom/Cartsync";
-import OrderTrackingPage from "./pages/orders/OrdersAndTracking";
+import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
+import OrderTrackingDetails from "./pages/orders/OrderTrackingDetails";
 import {
   BrowserRouter as Router,
   Routes,
@@ -41,18 +41,14 @@ const AppContent = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
-        <Route path="/ordersandtracking" element={<OrdersAndTracking/>}/>
+        <Route path="/orderstrackingpage" element={<OrderTrackingPage />} />
         <Route path="/login" element={<Login />}></Route>
         <Route path="/signup" element={<Signup />}></Route>
         <Route
-          path="/ordersandtracking"
-          element={<OrdersAndTracking />}
-        ></Route>
-
-        <Route
           path="/order-success/:orderId"
-          element={<OrderSuccessPage />} // 👈 This page handles the redirect URL
+          element={<OrderSuccessPage />} 
         />
+        <Route path="/ordertrackingdetails/:orderId" element={<OrderTrackingDetails />} />
         <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />
       </Routes>
@@ -67,5 +63,4 @@ const App = () => {
     </Router>
   );
 };
-
 export default App;

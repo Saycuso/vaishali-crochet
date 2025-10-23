@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useCheckoutLogic } from "@/hooks/useCheckoutData";
 import { Button } from "@/components/ui/button";
 import CheckoutAddress from "@/components/custom/Checkout/CheckoutAddress";
@@ -8,6 +8,7 @@ const CheckoutPage = ({ db }) => {
   // Use the custom hook to get all state and handlers
   const {
     isLoading,
+    userId,
     user,
     customerInfo,
     cartItems,
@@ -15,6 +16,7 @@ const CheckoutPage = ({ db }) => {
     totalAmount,
     isProcessing,
     orderError,
+    appId,
     navigate,
     setOrderError,
     setIsProcessing,
@@ -22,11 +24,18 @@ const CheckoutPage = ({ db }) => {
     handleOrderSuccess,
   } = useCheckoutLogic({ db });
 
+
+  useEffect(()=> {
+    console.log(`user ${userId} and appId ${appId}`)
+  },[appId, userId])
+
   // 1. LOADING STATE
-  if (isLoading || !user) {
+  if (isLoading || !user ) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <h1 className="text-xl text-gray-600">Loading user session and profile...</h1>
+        <h1 className="text-xl text-gray-600">
+          Loading user session and profile...
+        </h1>
       </div>
     );
   }
@@ -83,6 +92,8 @@ const CheckoutPage = ({ db }) => {
             setIsProcessing={setIsProcessing}
             setOrderError={setOrderError}
             isProcessing={isProcessing}
+            appId={appId}
+            userId = {userId}
           />
 
           {/* RIGHT COLUMN: Order Summary */}

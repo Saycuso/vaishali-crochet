@@ -61,7 +61,7 @@ const Navbar = () => {
     { name: "About", path: "/about" },
     { name: "Careers", path: "/careers" },
     { name: "Contact", path: "/contact" },
-    { name: "Orders And Tracking", path: "/ordersandtracking" },
+    { name: "Orders And Tracking", path: "/orderstrackingpage" },
   ];
 
   // Dynamically add Login/Logout to mobile menu

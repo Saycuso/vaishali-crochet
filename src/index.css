@@ -149,3 +149,15 @@
   transform: translateY(-20px); /* Move 20px up while fading out */
   transition: opacity 300ms ease-in, transform 300ms ease-in;
 }
+
+.fix-address p strong {
+  display: inline-block;
+  min-width: 70px; /* tweak width as needed for your label length */
+  vertical-align: top;
+}
+.fix-address p {
+  margin: 0;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
