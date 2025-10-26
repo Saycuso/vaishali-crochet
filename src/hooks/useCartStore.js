@@ -6,12 +6,13 @@ import { auth, db } from "@/firebase";
 export const useCartStore = create((set, get) => ({
   isCartOpen: false,
   cartItems: [],
+  buyNowItem: null,
 
-  // --- NEW ACTIONS FOR FIRESTORE SYNC ---
+  setBuyNowItem: (item) => set({ buyNowItem: item }),
 
   // 1. Action to reset the cart (used on logout)
   resetCart: () => {
-    set({ cartItems: [], isCartOpen: false });
+    set({ cartItems: [], isCartOpen: false, buyNowItem: null }); // 🔥 Added clear for buyNowItem
   },
 
   // 2. Action to set the cart state from Firestore (used by the listener)
@@ -47,10 +48,18 @@ export const useCartStore = create((set, get) => ({
     }));
   },
 
-  addItem: (product) => {
-    const { cartItems, syncCartToFirestore } = get();
-    let updatedCartItems;
+  addItem: (product, isBuyNow = false) => {
+    // 🔥 ADDED isBuyNow parameter
+    const { cartItems, syncCartToFirestore, setBuyNowItem } = get();
 
+    // 🔥 HANDLE BUY NOW: If this is a buy now request, only set the buyNowItem and exit.
+    if (isBuyNow) {
+      setBuyNowItem({ ...product, quantity: 1 });
+      return; // Don't proceed to modify the main cartItems array
+    }
+
+    // STANDARD ADD TO CART LOGIC
+    let updatedCartItems;
     const existingItem = cartItems.find((item) => item.id === product.id);
 
     if (existingItem) {
@@ -62,7 +71,7 @@ export const useCartStore = create((set, get) => ({
     }
 
     set({ cartItems: updatedCartItems });
-    syncCartToFirestore(updatedCartItems); // 🔥 Call sync after state update
+    syncCartToFirestore(updatedCartItems);
   },
 
   removeItem: (productId) => {
@@ -93,9 +102,9 @@ export const useCartStore = create((set, get) => ({
   },
 
   clearCart: () => {
-    // This is typically called only on successful checkout
+    // This is typically called only on successful checkout or Buy Now success
     const { syncCartToFirestore } = get();
-    set({ cartItems: [] });
-    syncCartToFirestore([]); // 🔥 Call sync after state update
+    set({ cartItems: [], buyNowItem: null }); // 🔥 Clear both main cart and buyNowItem
+    syncCartToFirestore([]);
   },
 }));

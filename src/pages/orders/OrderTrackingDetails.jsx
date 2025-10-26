@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import { db, app, auth } from "@/firebase";
 import {
   Card,
@@ -55,16 +56,8 @@ const OrderTrackingDetails = () => {
       return;
     }
 
-    const fetchOrder = async () => {
+    const fetchOrder = async (userId) => {
       try {
-        const userId = auth.currentUser?.uid; // Assuming auth is available globally or imported
-        if (!userId) {
-          navigate("/login", {
-            state: { from: `/orderstrackingpage/${orderId}` },
-          });
-          return;
-        }
-
         const orderDocPath = `artifacts/${appId}/users/${userId}/orders/${orderId}`;
         const docRef = doc(db, orderDocPath);
         const docSnap = await getDoc(docRef);
@@ -82,9 +75,20 @@ const OrderTrackingDetails = () => {
       }
     };
 
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchOrder(user.uid);
+      } else {
+        setIsLoading(false);
+        navigate("/login", {
+          state: { from: `/orderstrackingpage/${orderId}` },
+        });
+      }
+    });
+    return () => unsubscribe();
+
     // NOTE: This uses auth.currentUser, which might be null if the component loads before the auth state is ready.
     // A more robust solution involves waiting for auth state, but for quick fix, we use the simple check.
-    fetchOrder();
   }, [orderId, navigate]);
 
   const calculateTotal = (items) => {
@@ -206,7 +210,7 @@ const OrderTrackingDetails = () => {
                 Name:
               </p>
               <p className="flex items-start gap-2">
-              {order.customerInfo?.fullName || "N/A"}
+                {order.customerInfo?.fullName || "N/A"}
               </p>
             </div>
 

@@ -88,7 +88,7 @@ const ProductPage = () => {
         />
       </div>
 
-      <Separator className="my-12" />
+      <Separator className="my-0" />
       <ProductDetails product={product} />
       <Separator className="m-12" />
       <ProductReviews 

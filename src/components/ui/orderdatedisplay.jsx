@@ -6,7 +6,7 @@ import { CalendarDays } from "lucide-react";
  * @param {object} props
  * @param {object | null} props.timestamp - Firestore Timestamp object.
  */
-const OrderDateDisplay = ({ timestamp }) => {
+const OrderDateDisplay = ({ timestamp, className }) => {
     if (!timestamp) return <span className="text-gray-500">N/A</span>;
 
     // Convert Firestore Timestamp to Date object if needed
@@ -20,8 +20,8 @@ const OrderDateDisplay = ({ timestamp }) => {
     });
 
     return (
-        <div className="flex items-center space-x-2 text-sm text-white pb-2 border-b border-gray-100">
-            <CalendarDays className="h-4 w-4 text-white" />
+        <div className={`flex items-center space-x-1 text-sm `}>
+            <CalendarDays className={`h-4 w-4 ${className}`} />
             <span>{formattedDate}</span>
         </div>
     );

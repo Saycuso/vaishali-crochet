@@ -34,18 +34,22 @@ const fetchProfileFromFirestore = async (db, userId) => {
 
 export const useCheckoutLogic = ({ db }) => {
   const navigate = useNavigate();
-  const cartItems = useCartStore((state) => state.cartItems);
+  const { cartItems: mainCartItems, buyNowItem } = useCartStore();
   const clearCart = useCartStore((state) => state.clearCart);
+
+  // 🔥 DETERMINE THE FINAL ITEMS FOR CHECKOUT
+  // If buyNowItem exists, use an array containing only that item. Otherwise, use the main cart.
+  const checkoutItems = buyNowItem ? [buyNowItem] : mainCartItems;
 
   // State Management
   const [customerInfo, setCustomerInfo] = useState(null);
   const [user, setUser] = useState(null);
-  const [userId, setUserId] = useState(null)
+  const [userId, setUserId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderError, setOrderError] = useState(null);
 
-  const subtotal = calculateSubTotal(cartItems);
+  const subtotal = calculateSubTotal(checkoutItems);
   const totalAmount = subtotal + SHIPPING_COST;
 
   // --- Core Logic: Check Profile Status ---
@@ -91,8 +95,9 @@ export const useCheckoutLogic = ({ db }) => {
         setUserId(currentUser.uid);
       } else {
         setUser(null);
-        setUserId(null)
-        if (cartItems.length > 0) {
+        setUserId(null);
+        // 🔥
+        if (checkoutItems.length > 0) {
           console.log("User not authenticated. Redirecting to login.");
           setIsLoading(false);
           navigate("/signup", { state: { from: "/detailspage" } });
@@ -103,7 +108,7 @@ export const useCheckoutLogic = ({ db }) => {
     });
 
     return () => unsubscribe();
-  }, [db, cartItems.length, navigate, checkProfileStatus]);
+  }, [db, checkoutItems.length, navigate, checkProfileStatus]);
 
   // --- HANDLER: PLACE ORDER ---
   const handleSaveOrderToDb = async (currentCustomerInfo) => {
@@ -116,7 +121,8 @@ export const useCheckoutLogic = ({ db }) => {
 
     const orderData = {
       userId: userId,
-      items: cartItems.map((item) => ({
+      // 🔥
+      items: checkoutItems.map((item) => ({
         id: item.id,
         name: item.name,
         price: item.price,
@@ -161,7 +167,7 @@ export const useCheckoutLogic = ({ db }) => {
     userId,
     user,
     customerInfo,
-    cartItems,
+    cartItems: checkoutItems,
     subtotal,
     totalAmount,
     isProcessing,

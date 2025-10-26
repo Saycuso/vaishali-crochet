@@ -10,81 +10,60 @@ import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
   SheetTitle,
   SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  ShoppingBag,
+  Info,
+  Briefcase,
+  Mail,
+  Package,
+  LogOut,
+  LogIn,
+} from "lucide-react";
 
-const auth = getAuth(app); // Initialize auth instance once
-
-// Placeholder for the missing logo import
-const LOGO_PLACEHOLDER = "Handmade With Love";
+const auth = getAuth(app);
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  // 2. State to track login status
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
-  // 3. Destructure cart actions and state
   const { toggleCart, cartItems, clearCart } = useCartStore();
 
-  // --- Auth State Listener ---
   useEffect(() => {
-    // This listener runs immediately, and then every time the user logs in or out
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // If user object exists, they are logged in (user will be null if logged out).
       setIsLoggedIn(!!user);
       console.log(`Auth state changed. Logged in: ${!!user}`);
     });
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  // --- Logout Handler ---
   const handleLogout = async () => {
     try {
-      // Using a try/catch to handle sign out gracefully
       await signOut(auth);
       clearCart();
       console.log("User logged out successfully.");
-      // Close the mobile menu after logging out
       setIsOpen(false);
-      // Firebase listener updates isLoggedIn automatically
     } catch (error) {
       console.error("Error signing out: ", error);
     }
   };
 
-  // Base navigation items
   const baseNavItems = [
-    { name: "Shop", path: "/shop" },
-    { name: "About", path: "/about" },
-    { name: "Careers", path: "/careers" },
-    { name: "Contact", path: "/contact" },
-    { name: "Orders And Tracking", path: "/orderstrackingpage" },
+    { name: "Shop", path: "/shop", icon: ShoppingBag },
+    { name: "About", path: "/about", icon: Info },
+    { name: "Careers", path: "/careers", icon: Briefcase },
+    { name: "Contact", path: "/contact", icon: Mail },
+    { name: "Orders And Tracking", path: "/orderstrackingpage", icon: Package },
   ];
-
-  // Dynamically add Login/Logout to mobile menu
-  const mobileNavItems = [
-    ...baseNavItems,
-    // Conditionally add the Logout or Login item
-    ...(isLoggedIn
-      ? [{ name: "Logout", onClick: handleLogout }]
-      : [{ name: "Login", path: "/login" }]),
-  ];
-
-  // Helper function to handle mobile link clicks
-  const handleMobileLinkClick = (item) => {
-    setIsOpen(false);
-    if (item.onClick) {
-      item.onClick();
-    }
-  };
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="mx-auto p-1 flex justify-between items-center">
-        {/* Mobile menu on the left */}
+        {/* Mobile menu */}
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -108,32 +87,78 @@ const Navbar = () => {
                 </svg>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <SheetTitle className="sr-only">Main Menu</SheetTitle>
-              <SheetDescription className="sr-only">
-                Navigate to different sections of the website.
-              </SheetDescription>
-              <nav className="flex flex-col gap-3 p-4">
-                {/* Use dynamically filtered mobileNavItems */}
-                {mobileNavItems.map((item) => (
+
+            <SheetContent side="left" className="w-65 flex flex-col p-0">
+              <SheetHeader className="p-4 border-b">
+                <SheetTitle className="text-left">
                   <Link
-                    key={item.name}
-                    to={item.path || "#"} // Use path if it exists, otherwise '#' for buttons
-                    onClick={() => handleMobileLinkClick(item)}
-                    className="w-full p-3 text-lg rounded-md text-gray-800 hover:bg-gray-100 transition-colors"
+                    to="/"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2"
                   >
-                    {item.name}
+                    <img src={LOGO} className="h-10 w-auto" alt="Logo" />
                   </Link>
-                ))}
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Main navigation menu.
+                </SheetDescription>
+              </SheetHeader>
+
+              {/* Main navigation links */}
+              <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+                {baseNavItems.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 shadow-sm border border-orange-200"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
+                    >
+                      <item.icon
+                        className={`h-5 w-5 ${
+                          isActive ? "text-orange-600" : "text-gray-600"
+                        }`}
+                      />
+                      {item.name}
+                    </Link>
+                  );
+                })}
               </nav>
+
+              {/* Auth Section */}
+              <div className="mt-auto border-t p-4">
+                {isLoggedIn ? (
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="w-full justify-start flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-all hover:bg-red-50 hover:text-red-600 text-base font-medium"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                  </Button>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-all hover:bg-gray-100 hover:text-gray-900 text-base font-medium"
+                  >
+                    <LogIn className="h-5 w-5 text-gray-600" />
+                    Login
+                  </Link>
+                )}
+              </div>
             </SheetContent>
           </Sheet>
         </div>
 
-        {/* Logo and Home link (centered) */}
+        {/* Logo */}
         <Link to="/" className="text-2xl font-bold text-gray-800">
-          {/* Using text placeholder since image path was missing */}
-          <img src={LOGO} className="h-10 w-auto" />
+          <img src={LOGO} className="h-10 w-auto" alt="Logo" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -143,8 +168,7 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`text-gray-600 hover:text-gray-800 transition-colors duration-200
-                ${
+                className={`text-gray-600 hover:text-gray-800 transition-colors duration-200 ${
                   location.pathname === item.path
                     ? "font-semibold text-gray-900"
                     : ""
@@ -153,19 +177,14 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
-            {/* Desktop Logout Button - Hidden in favor of using the primary User/Login button */}
-            {/* Keeping it clean: Auth state is managed by the main right-side button */}
           </div>
         </div>
 
-        {/* User Profile / Login and Cart on the right */}
+        {/* Right side - Profile + Cart */}
         <div className="flex gap-1 items-center">
-          {/* 4. Conditional User/Login Button */}
           {isLoggedIn ? (
-            // Show Profile Icon if logged in
             <Link to="/detailspage">
               <Button variant="outline" size="compact" title="User Profile">
-                {/* User Profile Icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -184,7 +203,6 @@ const Navbar = () => {
               </Button>
             </Link>
           ) : (
-            // Show Login Button if logged out
             <Link to="/login">
               <Button
                 variant="default"
@@ -196,7 +214,7 @@ const Navbar = () => {
             </Link>
           )}
 
-          {/* Cart Button with Count (Opens the CartSidebar via toggleCart) */}
+          {/* Cart Button */}
           <Button
             variant="outline"
             size="compact"
@@ -204,7 +222,6 @@ const Navbar = () => {
             className="mr-1 relative"
             title="View Shopping Cart"
           >
-            {/* Shopping Cart Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -221,10 +238,8 @@ const Navbar = () => {
               <circle cx="19" cy="21" r="1" />
               <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57L22 4H6" />
             </svg>
-            {/* Cart Item Count Badge */}
             {cartItems.length > 0 && (
               <span className="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                {/* Display up to 9 items, then '9+' */}
                 {cartItems.length > 9 ? "9+" : cartItems.length}
               </span>
             )}

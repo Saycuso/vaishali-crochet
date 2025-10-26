@@ -161,3 +161,28 @@
   word-wrap: break-word;
   overflow-wrap: anywhere;
 }
+
+/*
+ * === Autoplay Progress Bar ===
+ */
+
+/* This defines the animation: 0% to 100% over 5 seconds */
+@keyframes fillProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* This applies the animation to our element */
+.progress-bar-fill {
+  /* Match the 5000ms delay in your plugin */
+  animation: fillProgress 5000ms linear forwards;
+}
+
+/* This pauses the animation when the 'paused' class is added */
+.progress-bar-fill.paused {
+  animation-play-state: paused;
+}

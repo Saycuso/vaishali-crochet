@@ -75,9 +75,9 @@ const OrderHistoryListCard = ({ order }) => {
           {/* 2. ORDER DETAILS */}
           <div className="flex flex-col min-w-0">
             {/* Date & Item Count */}
-            <div className="flex flex-col text-sm text-gray-600">
+            <div className="flex flex-col text-sm text-gray-600 gap-1">
               <div className="flex items-center gap-1">
-                <OrderDateDisplay timestamp={order.createdAt} />
+                <OrderDateDisplay className="text-orange-500" timestamp={order.createdAt} />
               </div>
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4 text-orange-500" />
