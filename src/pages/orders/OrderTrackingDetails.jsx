@@ -21,7 +21,7 @@ import {
   Mail,
   ChevronLeft, // For the back button
 } from "lucide-react";
-import OrderDateDisplay from "@/components/ui/orderDateDisplay";
+import OrderDateDisplay from "@/components/ui/orderdatedisplay";
 import { Button } from "@/components/ui/button";
 
 const appId = app.options.appId;
