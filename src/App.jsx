@@ -15,6 +15,10 @@ import CartSync from "./components/custom/Cartsync";
 import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
 import OrderTrackingDetails from "./pages/orders/OrderTrackingDetails";
 import Wishlist from "./components/custom/Wishlist";
+import TermsAndConditionsPage from "./pages/policy pages/Terms-and-conditions";
+import PrivacyPolicyPage from "./pages/policy pages/Privacy-policy";
+import RefundPolicyPage from "./pages/policy pages/Refund-policy";
+import Footer from "./components/custom/Footer";
 import {
   BrowserRouter as Router,
   Routes,
@@ -45,15 +49,22 @@ const AppContent = () => {
         <Route path="/orderstrackingpage" element={<OrderTrackingPage />} />
         <Route path="/login" element={<Login />}></Route>
         <Route path="/signup" element={<Signup />}></Route>
+        <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
         <Route
-          path="/order-success/:orderId"
-          element={<OrderSuccessPage />} 
+          path="/terms-and-conditions"
+          element={<TermsAndConditionsPage />}
         />
-        <Route path="/ordertrackingdetails/:orderId" element={<OrderTrackingDetails />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route
+          path="/ordertrackingdetails/:orderId"
+          element={<OrderTrackingDetails />}
+        />
         <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />
-        <Route path="/wishlist" element={<Wishlist/>}/>
+        <Route path="/wishlist" element={<Wishlist />} />
       </Routes>
+      <Footer />
     </>
   );
 };

@@ -103,27 +103,6 @@ const HomePage = () => {
           View Open Roles
         </Button>
       </section>
-
-      {/* 6️⃣ Footer */}
-      <footer className="w-full bg-gray-900 text-gray-300 py-6 px-6 text-center mt-2">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm mb-4 md:mb-0">
-            © {new Date().getFullYear()} Vaishali’s Crochet. All rights
-            reserved.
-          </p>
-          <div className="flex gap-6">
-            <a href="/about" className="hover:text-orange-400 transition">
-              About
-            </a>
-            <a href="/contact" className="hover:text-orange-400 transition">
-              Contact
-            </a>
-            <a href="/careers" className="hover:text-orange-400 transition">
-              Careers
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
