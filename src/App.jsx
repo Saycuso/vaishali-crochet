@@ -11,7 +11,7 @@ import Signup from "./components/custom/Signup";
 import "./App.css";
 import DetailsPage from "./components/custom/DetailsPage";
 import ProductPage from "./pages/shop/Product/ProuctPage";
-import CartSync from "./components/custom/Cartsync";
+import CartSync from "./components/custom/CartSync";
 import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
 import OrderTrackingDetails from "./pages/orders/OrderTrackingDetails";
 import Wishlist from "./components/custom/Wishlist";
