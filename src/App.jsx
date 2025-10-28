@@ -14,6 +14,7 @@ import ProductPage from "./pages/shop/Product/ProuctPage";
 import CartSync from "./components/custom/Cartsync";
 import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
 import OrderTrackingDetails from "./pages/orders/OrderTrackingDetails";
+import Wishlist from "./components/custom/Wishlist";
 import {
   BrowserRouter as Router,
   Routes,
@@ -51,6 +52,7 @@ const AppContent = () => {
         <Route path="/ordertrackingdetails/:orderId" element={<OrderTrackingDetails />} />
         <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />
+        <Route path="/wishlist" element={<Wishlist/>}/>
       </Routes>
     </>
   );

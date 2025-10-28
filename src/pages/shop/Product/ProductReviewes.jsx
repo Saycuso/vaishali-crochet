@@ -1,28 +1,15 @@
+/* eslint-disable no-irregular-whitespace */
 import React, { useState, useEffect } from "react";
 import { CardContent, Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"; // Using Textarea for comment
 import { Input } from "@/components/ui/input"; // Assuming you have an Input component
-import { db } from "@/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db, app } from "@/firebase";
+import { doc, collection, query, where, getDocs, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 
-// Helper function to read customer info from local storage
-const getCustomerNameFromLocalStorage = () => {
-  try {
-    const customerInfo = localStorage.getItem("userProfile");
-    if (customerInfo) {
-      // NOTE: Using Session Storage is recommended for security!
-      const { name } = JSON.parse(customerInfo);
-      return name || null; // Return the name if it exists, otherwise null
-    }
-    return null;
-  } catch (error) {
-    console.error("Error reading customerInfo from local storage:", error);
-    return null;
-  }
-};
-
+const appId = app.options.appId;
 // Component Start
 const ProductReviewSection = ({ productId }) => {
   const navigate = useNavigate();
@@ -32,36 +19,69 @@ const ProductReviewSection = ({ productId }) => {
   const [rating, setRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewerName, setReviewerName] = useState(null);
-
+  const [userId, setUserId] = useState(null)
   // --- 1. FETCH EXISTING REVIEWS ---
   useEffect(() => {
-    setReviewerName(getCustomerNameFromLocalStorage());
+   if (!productId) return;
 
-    const fetchReviews = async () => {
-      if (!productId) return;
-      try {
-        const reviewsRef = collection(db, "reviews");
-        const q = query(reviewsRef, where("productId", "==", productId));
-        const snapshot = await getDocs(q);
+   const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const currentUserId = user.uid;
+        setUserId(currentUserId);
+        
+        // 🅰️ FETCH REVIEWER NAME FROM ARTIFACTS
+        try {
+          // Construct the path using appId and userId
+          const profileDocPath = `artifacts/${appId}/users/${currentUserId}/profile/details`;
+          const profileDocRef = doc(db, profileDocPath);
+          const docSnap = await getDoc(profileDocRef);
 
-        const fetchedReviews = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setReviews(fetchedReviews);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-      }
-    };
-    fetchReviews();
-  }, [productId]);
+          if (docSnap.exists()) {
+            // Use the 'name' field from the profile document
+            setReviewerName(docSnap.data().name || user.email.split('@')[0]); // Fallback to email prefix
+          } else {
+            console.warn("User profile details not found. Using email prefix as name.");
+            setReviewerName(user.email.split('@')[0]);
+          }
+        } catch (error) {
+          console.error("Error fetching user name:", error);
+          setReviewerName("Anonymous User");
+        }
+
+        // 🅱️ FETCH REVIEWS (This logic is fine)
+        fetchExistingReviews(productId);
+      } else {
+        // User is not logged in
+        setUserId(null);
+        setReviewerName(null);
+        fetchExistingReviews(productId);
+      }
+    });
+    const fetchExistingReviews = async (pId) => {
+      try {
+        const reviewsRef = collection(db, "reviews");
+        const q = query(reviewsRef, where("productId", "==", pId));
+        const snapshot = await getDocs(q);
+
+        const fetchedReviews = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setReviews(fetchedReviews);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+
+    return () => unsubscribeAuth();
+  }, [productId]);
 
   // --- 2. SUBMIT NEW REVIEW HANDLER ---
   const handleSubmitReview = async (e) => {
     e.preventDefault();
 
     // A. Check for Name:
-    if (!reviewerName) {
+    if (!reviewerName || !userId) {
       alert("Please enter your details first to submit a review.");
       // NOTE: You are navigating to /detailspage, but your details page is likely /checkout
       navigate("/detailspage"); 
@@ -77,6 +97,7 @@ const ProductReviewSection = ({ productId }) => {
       const newReview = {
         productId,
         reviewerName,
+        reviewerId: userId,
         rating,
         title: newReviewTitle.trim(), // <-- ADDED TITLE
         comment: newReviewText.trim(),

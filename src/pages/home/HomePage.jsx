@@ -30,7 +30,6 @@ const HomePage = () => {
       {/* 3️⃣ About & Milestone Section */}
       <section className="w-full bg-pink-50 py-4 px-6">
           <YouTubeMilestone />
-
       </section>    
        <div className="w-full h-[1px] bg-gradient-to-r from-orange-200 via-pink-200 to-orange-200 my-6" />
        <section className="w-full bg-pink-50 py-8 px-6">

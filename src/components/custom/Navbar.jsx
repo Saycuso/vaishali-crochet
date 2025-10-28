@@ -1,5 +1,4 @@
-// src/components/custom/Navbar.jsx
-
+/* eslint-disable no-irregular-whitespace */
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,7 @@ import {
   Package,
   LogOut,
   LogIn,
+  Heart,
 } from "lucide-react";
 
 const auth = getAuth(app);
@@ -30,6 +30,7 @@ const auth = getAuth(app);
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [wishlistCount] = useState(0); // ✅ start with 0, no random “3”
   const location = useLocation();
   const { toggleCart, cartItems, clearCart } = useCartStore();
 
@@ -63,12 +64,11 @@ const Navbar = () => {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="mx-auto p-1 flex justify-between items-center">
-        {/* Mobile menu */}
+        {/* ================= Mobile Menu ================= */}
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="compact" className="ml-1">
-                {/* Menu Icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -104,7 +104,7 @@ const Navbar = () => {
                 </SheetDescription>
               </SheetHeader>
 
-              {/* Main navigation links */}
+              {/* Navigation links */}
               <nav className="flex-1 overflow-y-auto p-4 space-y-2">
                 {baseNavItems.map((item) => {
                   const isActive = location.pathname === item.path;
@@ -156,12 +156,12 @@ const Navbar = () => {
           </Sheet>
         </div>
 
-        {/* Logo */}
+        {/* ================= Logo ================= */}
         <Link to="/" className="text-2xl font-bold text-gray-800">
           <img src={LOGO} className="h-10 w-auto" alt="Logo" />
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* ================= Desktop Navigation ================= */}
         <div className="max-md:hidden">
           <div className="flex gap-10 lg:gap-20">
             {baseNavItems.map((item) => (
@@ -180,26 +180,22 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Right side - Profile + Cart */}
-        <div className="flex gap-1 items-center">
+        {/* ================= Right Side: Wishlist + Cart ================= */}
+        <div className="flex gap-2 items-center mr-2">
           {isLoggedIn ? (
-            <Link to="/detailspage">
-              <Button variant="outline" size="compact" title="User Profile">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-user"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
+            <Link to="/wishlist">
+              <Button
+                variant="outline"
+                size="compact"
+                title="Wishlist"
+                className="relative"
+              >
+                <Heart className="h-5 w-5 text-red-500" />
+                {wishlistCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                    {wishlistCount > 9 ? "9+" : wishlistCount}
+                  </span>
+                )}
               </Button>
             </Link>
           ) : (
@@ -219,7 +215,7 @@ const Navbar = () => {
             variant="outline"
             size="compact"
             onClick={() => toggleCart(true)}
-            className="mr-1 relative"
+            className="relative"
             title="View Shopping Cart"
           >
             <svg
