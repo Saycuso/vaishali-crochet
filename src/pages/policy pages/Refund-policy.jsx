@@ -2,94 +2,165 @@ import React from "react";
 
 const RefundPolicyPage = () => {
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-4">
-        Refund and Return Policy for Vaishalis crochet
-      </h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Last Updated: October 28, 2025
-      </p>
+    <div className="bg-gray-50 min-h-screen px-5 py-8 md:px-10">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">
+          Refund & Return Policy
+        </h1>
+        <p className="text-xs text-gray-500 mt-2">
+          Last Updated: October 28, 2025
+        </p>
+        <p className="mt-3 text-sm text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          This policy outlines the process and conditions for requesting a refund
+          or return for purchases made on{" "}
+          <span className="font-semibold text-orange-600">Vaishalis Crochet</span>.
+        </p>
+      </div>
 
-      <p className="mb-4">
-        This policy outlines the process and conditions for requesting a refund
-        or return for purchases made on the Vaishalis crochet website.
-      </p>
+      {/* Content Wrapper */}
+      <div className="bg-white shadow-md rounded-2xl p-5 md:p-8 space-y-6 text-gray-700 leading-relaxed">
+        {/* SECTION 1 - SHIPPING POLICY */}
+        <section>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 border-b pb-2 mb-3">
+            1. Shipping Policy & Delivery
+          </h2>
+          <ul className="space-y-3 text-sm md:text-base">
+            <li>
+              <span className="font-semibold text-gray-800">Processing Time:</span>{" "}
+              All products are handmade. Orders typically take{" "}
+              <span className="text-red-500 font-bold">3–7 business days</span> to
+              prepare before shipping.
+            </li>
+            <li>
+              <span className="font-semibold text-gray-800">Shipping Partners:</span>{" "}
+              We use trusted carriers such as India Post, Delhivery, or Blue Dart for
+              domestic delivery.
+            </li>
+            <li>
+              <span className="font-semibold text-gray-800">Delivery Time:</span>{" "}
+              Usually{" "}
+              <span className="text-red-500 font-bold">3–5 business days</span> after
+              dispatch.
+            </li>
+            <li>
+              <span className="font-semibold text-gray-800">Tracking:</span>{" "}
+              A tracking number will be emailed once shipped.
+            </li>
+            <li>
+              <span className="font-semibold text-gray-800">Loss or Damage:</span>{" "}
+              See refund terms below.
+            </li>
+          </ul>
+        </section>
 
-      <h2 className="text-2xl font-semibold mt-6 mb-3">
-        1. Cancellation Policy
-      </h2>
-      <p className="font-bold text-lg mb-2 text-red-600">
-        Vaishalis crochet has a NO CANCELLATION policy.
-      </p>
-      <p className="mb-4">
-        Due to the custom and handcrafted nature of our products, production
-        often begins immediately after an order is placed. Therefore, all sales
-        are considered final immediately upon purchase, and we cannot
-        accommodate order cancellations.
-      </p>
+        {/* SECTION 2 - CANCELLATION POLICY */}
+        <section>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 border-b pb-2 mb-3">
+            2. Cancellation Policy
+          </h2>
+          <p className="text-red-600 font-bold mb-1">
+            Vaishalis Crochet follows a strict NO CANCELLATION policy.
+          </p>
+          <p className="text-sm md:text-base">
+            As all products are handmade, production begins right after an order is
+            placed. Therefore, cancellations cannot be accepted once payment is
+            confirmed.
+          </p>
+        </section>
 
-      <h2 className="text-2xl font-semibold mt-6 mb-3">
-        2. Refund Policy (Returns)
-      </h2>
-      <p>
-        We take pride in the quality and craftsmanship of our products. Returns
-        and refunds are issued under specific, limited conditions:
-      </p>
+        {/* SECTION 3 - REFUND POLICY */}
+        <section>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800 border-b pb-2 mb-3">
+            3. Refund Policy (Returns)
+          </h2>
+          <p className="text-sm md:text-base mb-4">
+            We take pride in our craftsmanship. Refunds or returns are only allowed
+            under specific conditions mentioned below.
+          </p>
 
-      <h3 className="text-xl font-semibold mb-2">A. Eligibility for Refund</h3>
-      <p>A refund is **only** issued if:</p>
-      <ol className="list-decimal list-inside ml-4 mt-2 mb-4 space-y-1">
-        <li>
-          **Item is Damaged in Transit:** The product arrives clearly damaged
-          due to shipping negligence. You must report this within **48 hours**
-          of delivery.
-        </li>
-        <li>
-          **Incorrect Item Received:** You received a product or color that is
-          fundamentally different from what you ordered (e.g., received a candle
-          holder when you ordered a rangoli).
-        </li>
-      </ol>
+          {/* A. ELIGIBILITY */}
+          <div className="bg-orange-50 border-l-4 border-orange-400 rounded-lg p-4 mb-3">
+            <h3 className="font-semibold text-gray-800 mb-2">A. Eligibility for Refund</h3>
+            <ol className="list-decimal list-inside space-y-2 text-sm md:text-base">
+              <li>
+                <span className="font-semibold">Damaged in Transit:</span> If a product
+                arrives damaged, report it within{" "}
+                <span className="text-red-500 font-bold">48 hours</span> of delivery.
+              </li>
+              <li>
+                <span className="font-semibold">Incorrect Item:</span> If you receive a
+                completely different product than ordered (e.g., different category or
+                color).
+              </li>
+            </ol>
+          </div>
 
-      <h3 className="text-xl font-semibold mb-2">B. Ineligible for Refund</h3>
-      <p>We **do not** offer refunds or returns for the following reasons:</p>
-      <ul className="list-disc list-inside ml-4 mt-2 mb-4 space-y-1">
-        <li>**Change of Mind:** You simply no longer want the product.</li>
-        <li>
-          **Minor Variance:** Small, natural variations in size, color, or
-          pattern inherent to handmade items (as noted in the Terms &
-          Conditions).
-        </li>
-        <li>
-          **Incorrect Address:** The order was lost due to an incorrect or
-          incomplete shipping address provided by the customer.
-        </li>
-      </ul>
+          {/* B. INELIGIBLE */}
+          <div className="bg-gray-50 border-l-4 border-gray-300 rounded-lg p-4 mb-3">
+            <h3 className="font-semibold text-gray-800 mb-2">B. Ineligible for Refund</h3>
+            <ul className="list-disc list-inside space-y-2 text-sm md:text-base">
+              <li>Change of mind after purchase.</li>
+              <li>
+                Minor differences in size or color — handmade items may vary slightly.
+              </li>
+              <li>Incorrect or incomplete shipping address provided by the buyer.</li>
+            </ul>
+          </div>
 
-      <h3 className="text-xl font-semibold mb-2">C. Refund Process</h3>
-      <ol className="list-decimal list-inside ml-4 mt-2 mb-4 space-y-1">
-        <li>
-          **Report Damage/Error:** Send an email to
-          **vaishaliscrochet@gmail.com** within **48 hours** of delivery,
-          including: Your **Order Number**, Clear **photographs** of the damage
-          to the item and the packaging, and a brief description of the issue.
-        </li>
-        <li>
-          **Approval:** We will review your request within **[2-3] business
-          days** and notify you of the approval or rejection of your refund.
-        </li>
-        <li>
-          **Return Shipping:** If approved, we will provide instructions for
-          returning the item. **[State clearly who pays for return shipping,
-          e.g., "We will cover the cost of return shipping for damaged/incorrect
-          items." OR "The customer is responsible for return shipping costs."]**
-        </li>
-        <li>
-          **Refund Issue:** Once we receive the returned item and verify the
-          damage or error, the refund will be processed to your original payment
-          method (Razorpay/Bank Account) within **[5-7] business days**.
-        </li>
-      </ol>
+          {/* C. PROCESS */}
+          <div className="bg-green-50 border-l-4 border-green-400 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 mb-2">C. Refund Process</h3>
+            <ol className="list-decimal list-inside space-y-2 text-sm md:text-base">
+              <li>
+                <span className="font-semibold">Report Issue:</span> Email us at{" "}
+                <a
+                  href="mailto:vaishaliscrochet@gmail.com"
+                  className="text-orange-600 font-medium underline"
+                >
+                  vaishaliscrochet@gmail.com
+                </a>{" "}
+                within <span className="text-red-500 font-bold">48 hours</span> of
+                delivery with order number and photos.
+              </li>
+              <li>
+                <span className="font-semibold">Approval:</span> We’ll review your claim
+                within <span className="font-semibold">2–3 business days</span> and
+                inform you of next steps.
+              </li>
+              <li>
+                <span className="font-semibold">Return Shipping:</span> We’ll share
+                return instructions after approval. If the issue is verified, return
+                shipping is covered by us.
+              </li>
+              <li>
+                <span className="font-semibold">Refund Timeline:</span> Once we receive
+                and verify the item, refunds are processed to your original payment
+                method (Razorpay/Bank) within{" "}
+                <span className="font-semibold">5–7 business days</span>.
+              </li>
+            </ol>
+          </div>
+        </section>
+
+        {/* FOOTNOTE */}
+        <section className="text-xs text-gray-500 border-t pt-3">
+          <p>
+            For further assistance, please contact us at{" "}
+            <a
+              href="mailto:vaishaliscrochet@gmail.com"
+              className="text-orange-500 underline"
+            >
+              vaishaliscrochet@gmail.com
+            </a>{" "}
+            or call us at{" "}
+            <a href="tel:+917021645040" className="text-orange-500 underline">
+              +91 70216 45040
+            </a>
+            .
+          </p>
+        </section>
+      </div>
     </div>
   );
 };
