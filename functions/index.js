@@ -1,16 +1,22 @@
-const functions = require("firebase-functions");
+// --- 🛠️ IMPORT V2 FUNCTIONS ---
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {setGlobalOptions} = require("firebase-functions/v2");
+
 const admin = require("firebase-admin");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const logger = require("firebase-functions/logger");
-
-// --- 🛠️ ADDED NODEMAILER ---
 const nodemailer = require("nodemailer");
 
 // Initialize Firebase Admin SDK and Firestore
 admin.initializeApp();
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
+
+// --- 🛠️ SET GLOBAL REGION ---
+// This ensures your functions deploy to 'us-central1'
+// which your client app is already calling.
+setGlobalOptions({region: "us-central1"});
 
 // Helper function to verify the signature
 function verifyRazorpaySignature(body, signature) {
@@ -19,51 +25,48 @@ function verifyRazorpaySignature(body, signature) {
     logger.error("RAZORPAY_SECRET is not configured!");
     return false;
   }
-  const expectedSignature = crypto.createHmac("sha256", secret)
-      .update(body.toString())
-      .digest("hex");
+  const expectedSignature = crypto.createHmac("sha256", secret).update(body.toString()).digest("hex");
   return expectedSignature === signature;
 }
 
-
 // -----------------------------------------------------------
-// 2. CREATE ORDER FUNCTION (Cart Compatible)
+// 2. CREATE ORDER FUNCTION (V2 SYNTAX)
 // -----------------------------------------------------------
-exports.createOrder = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+exports.createOrder = onCall(async (request) => {
+  // 🛠️ Auth data is now in 'request.auth'
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Login required.");
   }
 
-  // Initialize Razorpay *inside* the function for lazy loading
   const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_ID,
     key_secret: process.env.RAZORPAY_SECRET,
   });
 
+  // 🛠️ Client data is now in 'request.data'
+  const data = request.data;
+  // 🛠️ UID is now in 'request.auth.uid'
+  const uid = request.auth.uid;
+
   const {totalAmountInPaise, customerInfo, items, shipping, subtotal} = data;
   const currency = "INR";
 
   if (!totalAmountInPaise || !items || items.length === 0 || !customerInfo) {
-    throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Missing required cart data (amount, items, or customer info).",
-    );
+    throw new HttpsError("invalid-argument", "Missing required cart data (amount, items, or customer info).");
   }
 
   const options = {
     amount: totalAmountInPaise,
     currency: currency,
-    receipt: `receipt_${context.auth.uid}_${Date.now()}`,
+    receipt: `receipt_${uid}_${Date.now()}`, // 🛠️ Use uid
     payment_capture: 1,
-    notes: {userId: context.auth.uid, itemCount: items.length,
-    },
+    notes: {userId: uid, itemCount: items.length}, // 🛠️ Use uid
   };
 
   try {
     const order = await razorpay.orders.create(options);
 
-    await db.collection("users").doc(context.auth.uid).collection("orders").doc(order.id).set({
-      userId: context.auth.uid,
+    await db.collection("users").doc(uid).collection("orders").doc(order.id).set({userId: uid, // 🛠️ Use uid
       orderId: order.id,
       items: items,
       customerInfo: customerInfo,
@@ -82,18 +85,23 @@ exports.createOrder = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     logger.error("Razorpay Order Creation Failed:", error);
-    throw new functions.https.HttpsError("internal", "Order creation failed.");
+    throw new HttpsError("internal", "Order creation failed.");
   }
 });
 
-
 // -----------------------------------------------------------
-// 3. VERIFY PAYMENT + ATOMIC STOCK DEDUCTION + SEND EMAIL
+// 3. VERIFY PAYMENT + ATOMIC STOCK DEDUCTION + SEND EMAIL (V2 SYNTAX)
 // -----------------------------------------------------------
-exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+exports.verifyAndDeductStock = onCall(async (request) => {
+  // 🛠️ Auth data is now in 'request.auth'
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Login required.");
   }
+
+  // 🛠️ Client data is now in 'request.data'
+  const data = request.data;
+  // 🛠️ UID is now in 'request.auth.uid'
+  const uid = request.auth.uid;
 
   const {razorpay_order_id, razorpay_payment_id, razorpay_signature} = data;
   const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -101,13 +109,17 @@ exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
   // 1. Signature Verification
   if (!verifyRazorpaySignature(body, razorpay_signature)) {
     logger.warn("Signature verification failed for order:", razorpay_order_id);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
         "unauthenticated",
         "Verification failed. Potential fraud.",
     );
   }
 
-  const orderRef = db.collection("users").doc(context.auth.uid).collection("orders").doc(razorpay_order_id);
+  const orderRef = db
+      .collection("users")
+      .doc(uid)
+      .collection("orders")
+      .doc(razorpay_order_id); // 🛠️ Use uid
   let customerEmail = ""; // Variable to hold email for sending
 
   try {
@@ -119,7 +131,6 @@ exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
       const orderData = orderDoc.data();
       if (orderData.status === "captured") return; // Already processed
 
-      // --- 🛠️ ADDED --- Store customer email for later
       customerEmail = orderData.customerInfo.email;
 
       for (const item of orderData.items) {
@@ -130,7 +141,10 @@ exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
         const quantityToDeduct = item.quantity;
 
         if (currentStock < quantityToDeduct) {
-          transaction.update(orderRef, {status: "failed_out_of_stock", failedItem: item.productId});
+          transaction.update(orderRef, {
+            status: "failed_out_of_stock",
+            failedItem: item.productId,
+          });
           throw new Error(`Insufficient stock for product: ${item.productId}`);
         }
 
@@ -147,7 +161,7 @@ exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
       });
     });
 
-    // --- 🛠️ 3. SEND CONFIRMATION EMAIL (Added from your old server.js) ---
+    // --- 🛠️ 3. SEND CONFIRMATION EMAIL (No changes needed here) ---
     if (customerEmail) {
       const transporter = nodemailer.createTransport({
         host: process.env.BREVO_HOST,
@@ -160,7 +174,7 @@ exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
       });
 
       const mailOptions = {
-        from: "\"Vaishali's Crochet Store\" <reactretro510@gmail.com>", // You can set this as an env variable too
+        from: "\"Vaishali's Crochet Store\" <reactretro510@gmail.com>",
         to: customerEmail,
         subject: `Order Confirmation #${razorpay_order_id}`,
         html: `
@@ -180,7 +194,6 @@ exports.verifyAndDeductStock = functions.https.onCall(async (data, context) => {
     return {status: "success", orderId: razorpay_order_id};
   } catch (error) {
     logger.error("Stock Deduction or Email Failed:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
-
