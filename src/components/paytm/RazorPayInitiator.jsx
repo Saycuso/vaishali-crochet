@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "../ui/button";
 import { app, auth } from "@/firebase"; // 👈 1. IMPORTED 'auth'
-import { getFunctions, httpsCallable } from "@firebase/functions"; // 👈 2. CORRECTED IMPORT PATH
+import { getFunctions, httpsCallable } from "firebase/functions"; // 👈 2. CORRECTED IMPORT PATH
 import { Loader2 } from "lucide-react";
 
 // --- Core Utility: Loads Razorpay Checkout Script ---
