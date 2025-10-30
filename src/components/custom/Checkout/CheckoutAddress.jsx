@@ -7,6 +7,8 @@ const CheckoutAddress = ({
   totalAmount, 
   orderError, 
   navigate,
+  cartItems,
+  subtotal,
   handleSaveOrderToDb,
   handleOrderSuccess,
   setIsProcessing,
@@ -57,6 +59,8 @@ const CheckoutAddress = ({
           isProcessing={isProcessing}
           setIsProcessing={setIsProcessing}
           customerInfo={customerInfo}
+          cartItems={cartItems}
+          subtotal={subtotal}
           onOrderSuccess={handleOrderSuccess}
           userId = {userId}
           appId = {appId}

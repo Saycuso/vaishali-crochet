@@ -1,13 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-
-// --- RAZORPAY CONSTANTS ---
-// 🛑 IMPORTANT: Use your actual Razorpay Key ID here. The Key Secret MUST stay on the server.
-const RAZORPAY_KEY_ID = "rzp_test_RQ4jbxUogklAk4";
-
-// 🚨 Backend Endpoints (Must match server.js)
-const BACKEND_ORDER_URL = "http://localhost:5000/api/razorpay/order";
-const BACKEND_VERIFY_URL = "http://localhost:5000/api/razorpay/verify";
+import { app } from "@/firebase"; // Your initialized Firebase app
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { Loader2 } from "lucide-react"; // Assuming you have this for loading
 
 // --- Core Utility: Loads Razorpay Checkout Script ---
 const loadScript = (src) => {
@@ -20,42 +15,24 @@ const loadScript = (src) => {
   });
 };
 
-// --- REAL API FUNCTION: Call the local Node.js Server to Create Order ---
-const createRazorpayOrder = async (orderPayload, totalAmount) => {
-  const response = await fetch(BACKEND_ORDER_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      amount: totalAmount.toFixed(2),
-      currency: "INR",
-      receipt: orderPayload.orderId, // Firebase ID
-      customerPhone: orderPayload.customerInfo.phone,
-    }),
-  });
-
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(
-      result.message ||
-        "Server failed to create Razorpay Order. Check console/backend logs."
-    );
-  }
-
-  return result;
-};
+// --- 1. INITIALIZE FIREBASE FUNCTIONS ---
+const functions = getFunctions(app, "us-central1"); // Use your function's region
+const createOrderFunction = httpsCallable(functions, "createOrder");
+const verifyPaymentFunction = httpsCallable(functions, "verifyAndDeductStock");
 
 const RazorpayInitiator = ({
-  onSaveOrderToDb,
   totalAmount,
   onOrderError,
   isProcessing,
   setIsProcessing,
   customerInfo,
   onOrderSuccess,
-  userId,
-  appId,
+  
+  // New props we just passed down
+  cartItems,
+  subtotal,
 }) => {
+
   const handleInitiatePayment = async () => {
     onOrderError(null);
     setIsProcessing(true);
@@ -71,84 +48,79 @@ const RazorpayInitiator = ({
     }
 
     try {
-      // --- STEP 1: SAVE THE ORDER TO THE DATABASE (Get internal ID) ---
-      const saveResult = await onSaveOrderToDb();
-      const orderPayload = saveResult.orderData;
-      const firebaseOrderId = saveResult.orderId;
+      // --- STEP 1: PREPARE DATA for the Cloud Function ---
+      // We must match the database structure EXACTLY
+      const orderData = {
+        totalAmountInPaise: Math.round(totalAmount * 100),
+        subtotal: subtotal,
+        shipping: 50, // Assuming 50 is your shipping cost
+        customerInfo: customerInfo,
+        items: cartItems.map((item) => ({
+          productId: item.id, // --- 🛠️ CRITICAL MAPPING ---
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          thumbnail: item.images[0] || item?.variants[0]?.images[0],
+        })),
+      };
 
-      orderPayload.orderId = firebaseOrderId;
-
-      // 2. Call the backend API to create the Razorpay Order (Get external ID)
-      const initResult = await createRazorpayOrder(orderPayload, totalAmount);
-
-      // 3. Configure Razorpay Checkout Options
+      // --- STEP 2: Call the 'createOrder' Cloud Function ---
+      // This function creates the Razorpay order AND saves the 'created' order to Firestore
+      const result = await createOrderFunction(orderData);
+      const { orderId, amount, currency, key_id } = result.data;
+      
+      // --- STEP 3: CONFIGURE RAZORPAY POPUP ---
       const options = {
-        key: RAZORPAY_KEY_ID,
-        amount: initResult.amount, // Amount in paise
-        currency: initResult.currency,
-        name: "Vaishali's Crochet Store",
-        description: `Order ID: ${firebaseOrderId}`,
-        order_id: initResult.orderId, // Razorpay Order ID from backend
+        key: key_id, // Use the Key ID from the function
+        amount: amount, // Amount in paise
+        currency: currency,
+        name: "Vaishalis crochet",
+        description: `Order ID: ${orderId}`,
+        order_id: orderId, // Razorpay Order ID
+
+        // --- STEP 4: PAYMENT HANDLER ---
         handler: async function (response) {
-          // 4. CRITICAL SECURITY STEP: Server Verification
-          setIsProcessing(true); // Re-engage processing state for server check
+          setIsProcessing(true); // Re-engage processing for verification
 
           const verificationData = {
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-            firebaseOrderId: firebaseOrderId, // Your internal reference
-            customerEmail: customerInfo.email,
-            userId: userId,
-            appId: appId,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
           };
-          // 🔥 CRITICAL FRONTEND DEBUG LOG
-          console.log("PAYLOAD SENT TO SERVER:", verificationData);
-          // You should see this in your browser's DevTools console!
-          // 🔥 END DEBUG LOG
 
           try {
-            const verificationResponse = await fetch(BACKEND_VERIFY_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(verificationData),
-            });
+            // --- STEP 5: Call the 'verifyAndDeductStock' Cloud Function ---
+            // This function verifies the signature AND atomically deducts stock
+            const verifyResult = await verifyPaymentFunction(verificationData);
 
-            const verificationResult = await verificationResponse.json();
-
-            if (verificationResult.verified) {
-              // Payment is PROVEN legit! ✅
-              console.log(`Payment Verified! Order: ${firebaseOrderId}`);
-              onOrderSuccess(firebaseOrderId, verificationData.paymentId);
+            if (verifyResult.data.status === "success") {
+              // Payment is PROVEN legit! ✅ Stock is deducted!
+              console.log(`Payment Verified! Order: ${verifyResult.data.orderId}`);
+              onOrderSuccess(verifyResult.data.orderId, response.razorpay_payment_id);
             } else {
-              // FAILED: The signature check failed. Potential fraud!
-              console.error("Payment FAILED SERVER VERIFICATION!");
-              onOrderError(
-                "Payment successful, but failed security check. Contact support."
-              );
+              // Should not happen if signature is valid, but good to have
+              onOrderError("Payment successful, but verification failed.");
             }
+
           } catch (error) {
-            console.error("Verification API call failed:", error);
-            onOrderError(
-              "Error communicating with server for payment verification."
-            );
-          } finally {
-            // Ensure we stop the spinner if verification fails
-            setIsProcessing(false);
+            console.error("Verification Function Failed:", error);
+            // This error comes from our *own* backend
+            onOrderError(`Verification Error: ${error.message}`);
           }
         },
         prefill: {
-          name: customerInfo?.fullName || orderPayload.customerInfo?.fullName,
-          contact: customerInfo?.phone || orderPayload.customerInfo?.phone,
+          name: customerInfo.name,
+          email: customerInfo.email,
+          contact: customerInfo.phone,
         },
         theme: {
           color: "#ea580c", // Tailwind orange-600
         },
         modal: {
-          // Optional: Allows the user to click again if they dismiss the popup
           ondismiss: () => {
             console.log("Razorpay popup closed or dismissed.");
             setIsProcessing(false);
+            onOrderError("Payment popup was closed.");
           },
         },
       };
@@ -157,11 +129,10 @@ const RazorpayInitiator = ({
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
 
-      // We keep setIsProcessing(true) until the user finishes or dismisses the modal
     } catch (e) {
       console.error("Error during payment initiation:", e);
       onOrderError(
-        e.message || "Failed to initiate payment. Check server connection."
+        e.message || "Failed to initiate payment. Check cloud function logs."
       );
       setIsProcessing(false);
     }
@@ -174,9 +145,14 @@ const RazorpayInitiator = ({
       size="lg"
       disabled={isProcessing || totalAmount <= 0}
     >
-      {isProcessing
-        ? "Contacting Payment Gateway..."
-        : `Place Order and Pay ₹${totalAmount.toFixed(2)}`}
+      {isProcessing ? (
+        <>
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          Processing Payment...
+        </>
+      ) : (
+        `Place Order and Pay ₹${totalAmount.toFixed(2)}`
+      )}
     </Button>
   );
 };

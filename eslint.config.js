@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'functions']), // ignore Firebase folder globally
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -24,6 +24,20 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      quotes: 'off', // 🟢 disable "must use double quotes" warning
+      'require-jsdoc': 'off', // 🟢 disable "missing JSDoc" warning
+    },
+  },
+  {
+    // 🟢 Firebase Functions exception: Node.js environment rules
+    files: ['functions/**/*.js'],
+    languageOptions: {
+      globals: globals.node, // make Node APIs valid (process, require, etc.)
+    },
+    rules: {
+      quotes: 'off',
+      'require-jsdoc': 'off',
+      'no-console': 'off', // allow console logs in backend
     },
   },
 ])

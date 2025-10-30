@@ -87,6 +87,8 @@ const CheckoutPage = ({ db }) => {
             totalAmount={totalAmount}
             orderError={orderError}
             navigate={navigate}
+            cartItems={cartItems}
+            subtotal={subtotal}
             handleSaveOrderToDb={handleSaveOrderToDb}
             handleOrderSuccess={handleOrderSuccess}
             setIsProcessing={setIsProcessing}
