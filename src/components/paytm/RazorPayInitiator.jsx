@@ -1,8 +1,8 @@
 import React from "react";
 import { Button } from "../ui/button";
-import { app } from "@/firebase";// Your initialized Firebase app
-import { getFunctions, httpsCallable } from "@firebase/functions";
-import { Loader2 } from "lucide-react"; // Assuming you have this for loading
+import { app, auth } from "@/firebase"; // 👈 1. IMPORTED 'auth'
+import { getFunctions, httpsCallable } from "@firebase/functions"; // 👈 2. CORRECTED IMPORT PATH
+import { Loader2 } from "lucide-react";
 
 // --- Core Utility: Loads Razorpay Checkout Script ---
 const loadScript = (src) => {
@@ -27,12 +27,11 @@ const RazorpayInitiator = ({
   setIsProcessing,
   customerInfo,
   onOrderSuccess,
-  
+
   // New props we just passed down
   cartItems,
   subtotal,
 }) => {
-
   const handleInitiatePayment = async () => {
     onOrderError(null);
     setIsProcessing(true);
@@ -48,6 +47,16 @@ const RazorpayInitiator = ({
     }
 
     try {
+      // --- 👇 3. ADDED TOKEN REFRESH LOGIC ---
+      if (!auth.currentUser) {
+        // This should ideally not be hit if your page logic is correct,
+        // but it's a good safeguard.
+        throw new Error("User is not logged in. Please log in again.");
+      }
+      // Force refresh the user's ID token to ensure it's not stale
+      await auth.currentUser.getIdToken(true);
+      // ------------------------------------
+
       // --- STEP 1: PREPARE DATA for the Cloud Function ---
       // We must match the database structure EXACTLY
       const orderData = {
@@ -68,7 +77,7 @@ const RazorpayInitiator = ({
       // This function creates the Razorpay order AND saves the 'created' order to Firestore
       const result = await createOrderFunction(orderData);
       const { orderId, amount, currency, key_id } = result.data;
-      
+
       // --- STEP 3: CONFIGURE RAZORPAY POPUP ---
       const options = {
         key: key_id, // Use the Key ID from the function
@@ -89,19 +98,30 @@ const RazorpayInitiator = ({
           };
 
           try {
+            // --- 5. ADDED TOKEN REFRESH FOR VERIFICATION ---
+            // Also refresh the token before the verify call
+            if (auth.currentUser) {
+                await auth.currentUser.getIdToken(true);
+            }
+            // --------------------------------------------
+
             // --- STEP 5: Call the 'verifyAndDeductStock' Cloud Function ---
             // This function verifies the signature AND atomically deducts stock
             const verifyResult = await verifyPaymentFunction(verificationData);
 
             if (verifyResult.data.status === "success") {
               // Payment is PROVEN legit! ✅ Stock is deducted!
-              console.log(`Payment Verified! Order: ${verifyResult.data.orderId}`);
-              onOrderSuccess(verifyResult.data.orderId, response.razorpay_payment_id);
+              console.log(
+                `Payment Verified! Order: ${verifyResult.data.orderId}`
+              );
+              onOrderSuccess(
+                verifyResult.data.orderId,
+                response.razorpay_payment_id
+              );
             } else {
               // Should not happen if signature is valid, but good to have
               onOrderError("Payment successful, but verification failed.");
             }
-
           } catch (error) {
             console.error("Verification Function Failed:", error);
             // This error comes from our *own* backend
@@ -128,7 +148,6 @@ const RazorpayInitiator = ({
       // 5. Open the Razorpay Checkout Modal
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
-
     } catch (e) {
       console.error("Error during payment initiation:", e);
       onOrderError(
