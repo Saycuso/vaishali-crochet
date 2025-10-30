@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCartStore } from "@/hooks/useCartStore";
+import { useCartStore } from "./useCartStore";
 import {
   collection,
   addDoc,

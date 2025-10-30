@@ -1,7 +1,7 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { app } from "@/firebase"; // Your initialized Firebase app
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { Button } from "../ui/button";
+import { app } from "@/firebase";// Your initialized Firebase app
+import { getFunctions, httpsCallable } from "@firebase/functions";
 import { Loader2 } from "lucide-react"; // Assuming you have this for loading
 
 // --- Core Utility: Loads Razorpay Checkout Script ---
