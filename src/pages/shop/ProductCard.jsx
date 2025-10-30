@@ -23,7 +23,10 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
     product?.variants?.[0]?.images?.[0] ||
     "https://placehold.co/400x300?text=No+Image";
 
-  const stock = typeof product?.stock === "number" ? product.stock : 0;
+  // 🛠️ FIX 1: Read the correct stockQuantity field from Firestore
+  // The 'stockQuantity' is the field you manually added in the database.
+  const stockQuantity = typeof product?.stockQuantity === "number" ? product.stockQuantity : 0; 
+  
   const hasDiscount =
     product?.originalprice &&
     product?.originalprice > product?.price;
@@ -34,6 +37,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
 
   useEffect(() => {
     if (!showWishlistButton) return;
+    // ... (Wishlist logic remains unchanged) ...
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -101,7 +105,8 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
     <Card className="rounded-2xl shadow-md p-0 bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group gap-2">
       
       {/* Discount Badge on Image */}
-      {hasDiscount && stock > 0 && (
+      {/* 🛠️ FIX 2: Use stockQuantity here */}
+      {hasDiscount && stockQuantity > 0 && ( 
         <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
           -{discountPercent}%
         </span>
@@ -132,8 +137,8 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
-        {/* Out of Stock Overlay */}
-        {stock === 0 && (
+        {/* 🛠️ FIX 3: Out of Stock Overlay - Show only when stockQuantity is exactly 0 */}
+        {stockQuantity === 0 && (
           <CardTitle className="absolute inset-0 bg-black/50 text-white font-bold flex items-center justify-center text-base">
             Out of Stock
           </CardTitle>
