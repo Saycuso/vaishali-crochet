@@ -1,9 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+// 👇 1. IMPORT THE APP CHECK STUFF
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// Your web app's Firebase configuration from your Firebase project settings
-// Use environment variables for security
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBIe5P6wyLqs0owYXooEDBFiWsKXgsgpbE",
   authDomain: "vaishali-crochet.firebaseapp.com",
@@ -17,5 +18,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-export { app, db, auth};
 
+// 👇 2. INITIALIZE APP CHECK
+// This code reads the Site Key from your .env file
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
+  isTokenAutoRefreshEnabled: true, // Automatically refreshes the token
+});
+
+// 👇 3. EXPORT APPCHECK
+export { app, db, auth, appCheck };
