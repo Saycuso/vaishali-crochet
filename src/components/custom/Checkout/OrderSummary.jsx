@@ -1,8 +1,34 @@
 import React from 'react';
-// 🛠️ REMOVED: const SHIPPING_COST = 50.0;
+// 🛠️ Import the subtotal calculator
+import { calculateSubTotal } from "@/lib/cartUtils"; 
 
-// 🛠️ REMOVED: subtotal, totalAmount from props
-const OrderSummary = ({ cartItems }) => { 
+// --- 🛠️ NEW: Shipping Logic (copied from backend) ---
+function getShippingCost(pincode) {
+  if (!pincode || pincode.length < 3) {
+    // We can't calculate shipping without a pincode, so show '...'
+    return null; 
+  }
+  // Maharashtra pincodes start with 40, 41, 42, 43, 44
+  const firstTwoDigits = pincode.substring(0, 2);
+  if (["40", "41", "42", "43", "44"].includes(firstTwoDigits)) {
+    return 80.0; // Maharashtra rate
+  }
+  return 100.0; // Rest of India rate
+}
+// --- 🛠️ END NEW LOGIC ---
+
+
+const OrderSummary = ({ cartItems, customerInfo }) => { 
+  
+  // --- 🛠️ NEW: Price Calculation ---
+  const subtotal = calculateSubTotal(cartItems);
+  // Get pincode from customerInfo, default to null if not available
+  const pincode = customerInfo?.pincode || null;
+  const shipping = getShippingCost(pincode);
+  // Only calculate total if shipping is known
+  const totalAmount = shipping !== null ? subtotal + shipping : null;
+  // ------------------------------
+
   return (
     <div className="md:w-2/5 flex flex-col space-y-6">
       <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -25,29 +51,37 @@ const OrderSummary = ({ cartItems }) => {
           ))}
         </div>
         
-        {/* --- 🛠️ REMOVED PRICE CALCULATION BLOCK ---
+        {/* --- 🛠️ RE-ADDED PRICE CALCULATION BLOCK --- */}
         <div className="space-y-2 pt-4 border-t">
           <div className="flex justify-between text-gray-600 text-sm">
             <span>Subtotal:</span>
             <span>₹{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-gray-600 text-sm">
-            <span>Shipping:</span>
-            <span>₹{SHIPPING_COST.toFixed(2)}</span>
+            <span>Shipping (Est.):</span>
+            {/* Show calculated shipping or '...' if pincode is missing */}
+            <span>
+              {shipping ? `₹${shipping.toFixed(2)}` : '...'}
+            </span>
           </div>
           <div className="flex justify-between text-xl font-bold pt-2 border-t mt-2">
-            <span>Order Total:</span>
+            <span>Order Total (Est.):</span>
             <span className="text-green-600">
-              ₹{totalAmount.toFixed(2)}
+              {/* Show calculated total or '...' */}
+              {totalAmount ? `₹${totalAmount.toFixed(2)}` : '...'}
             </span>
           </div>
         </div>
-        */}
+        {/* --- 🛠️ END FIX --- */}
 
-        {/* --- 🛠️ NEW: Shipping Info Box --- */}
+        {/* --- 🛠️ Updated Shipping Info Box --- */}
         <div className="space-y-2 pt-4 border-t">
           <p className="text-sm text-gray-600">
-            The final price, including your zone-based shipping (₹80 for MH, ₹100 for rest of India), will be calculated and shown on the Razorpay payment screen.
+            {shipping 
+              ? `Shipping is calculated based on your pincode (${pincode}).` 
+              : "Shipping will be calculated after you provide your address."}
+            <br/>
+            The final amount will be securely calculated and shown on the Razorpay screen.
           </p>
         </div>
         {/* --- 🛠️ END FIX --- */}

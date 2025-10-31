@@ -156,8 +156,7 @@ exports.verifyAndDeductStock = onCall(
           customerEmail = orderData.customerInfo.email;
 
           for (const item of orderData.items) {
-            // --- 🛠️ FIX: "Products" to "products" ---
-            const productRef = db.collection("products").doc(item.productId);
+            const productRef = db.collection("Products").doc(item.productId);
             const productDoc = await transaction.get(productRef);
 
             if (!productDoc.exists) throw new Error(`Product not found: ${item.productId}`);

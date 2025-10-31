@@ -101,6 +101,7 @@ const CheckoutPage = ({ db }) => {
             cartItems={cartItems}
             subtotal={subtotal}
             totalAmount={totalAmount}
+            customerInfo={customerInfo}
           />
         </div>
       </div>
