@@ -3,17 +3,15 @@ import { useCheckoutLogic } from "@/hooks/useCheckoutData";
 import { Button } from "@/components/ui/button";
 import CheckoutAddress from "@/components/custom/Checkout/CheckoutAddress";
 import OrderSummary from "@/components/custom/Checkout/OrderSummary";
-// The db prop is assumed to be passed from the parent router/context
+import RazorpayInitiator from "@/components/paytm/RazorPayInitiator";
+
 const CheckoutPage = ({ db }) => {
-  // Use the custom hook to get all state and handlers
   const {
     isLoading,
-    userId,
     user,
+    userId,
     customerInfo,
     cartItems,
-    subtotal,
-    totalAmount,
     isProcessing,
     orderError,
     appId,
@@ -23,13 +21,11 @@ const CheckoutPage = ({ db }) => {
     handleOrderSuccess,
   } = useCheckoutLogic({ db });
 
+  useEffect(() => {
+    console.log(`user ${userId} and appId ${appId}`);
+  }, [appId, userId]);
 
-  useEffect(()=> {
-    console.log(`user ${userId} and appId ${appId}`)
-  },[appId, userId])
-
-  // 1. LOADING STATE
-  if (isLoading || !user ) {
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <h1 className="text-xl text-gray-600">
@@ -39,9 +35,7 @@ const CheckoutPage = ({ db }) => {
     );
   }
 
-  // 2. REDIRECTING/PROFILE MISSING STATE (Should be brief)
   if (user && !customerInfo) {
-    // The hook has initiated the redirect to /detailspage, so this is a temporary screen.
     return (
       <div className="flex h-screen items-center justify-center">
         <h1 className="text-xl text-gray-600">
@@ -51,8 +45,7 @@ const CheckoutPage = ({ db }) => {
     );
   }
 
-  // 3. EMPTY CART STATE
-  if (cartItems.length === 0 && subtotal === 0) {
+  if (cartItems.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center h-screen pt-40">
         <h1 className="text-3xl font-bold text-gray-800">
@@ -71,38 +64,45 @@ const CheckoutPage = ({ db }) => {
     );
   }
 
-  // 4. MAIN CHECKOUT RENDER (customerInfo is guaranteed to be present here)
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-8 border-b pb-2">
+    <div className="min-h-screen bg-gradient-to-b from-[#fffdfb] to-[#f8f8f8] p-4 sm:p-6 md:p-10">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Progress bar for checkout flow */}
+        <div className="w-full h-1 bg-orange-100 rounded-full overflow-hidden">
+          <div className="w-3/4 h-1 bg-orange-500 rounded-full transition-all duration-500"></div>
+        </div>
+
+        <h1 className="text-3xl font-extrabold text-gray-900 text-center mt-2">
           Final Checkout
         </h1>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* LEFT COLUMN: Delivery Address & Payment */}
-          <CheckoutAddress
-            customerInfo={customerInfo}
-            totalAmount={totalAmount}
-            orderError={orderError}
-            navigate={navigate}
-            cartItems={cartItems}
-            subtotal={subtotal}
-            handleOrderSuccess={handleOrderSuccess}
-            setIsProcessing={setIsProcessing}
-            setOrderError={setOrderError}
-            isProcessing={isProcessing}
-            appId={appId}
-            userId = {userId}
-          />
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+          {/* LEFT - Address */}
+          <div className="md:w-3/5">
+            <CheckoutAddress customerInfo={customerInfo} />
+          </div>
 
-          {/* RIGHT COLUMN: Order Summary */}
-          <OrderSummary
-            cartItems={cartItems}
-            subtotal={subtotal}
-            totalAmount={totalAmount}
-            customerInfo={customerInfo}
-          />
+          {/* RIGHT - Summary + Payment */}
+          <div className="md:w-2/5 flex flex-col gap-6">
+            <OrderSummary cartItems={cartItems} customerInfo={customerInfo} />
+
+            <div className="bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-lg border border-gray-100 sticky bottom-4">
+              {orderError && (
+                <div className="p-3 mb-4 text-sm text-red-800 bg-red-100 rounded-lg">
+                  {orderError}
+                </div>
+              )}
+
+              <RazorpayInitiator
+                onOrderError={setOrderError}
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                customerInfo={customerInfo}
+                cartItems={cartItems}
+                onOrderSuccess={handleOrderSuccess}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
