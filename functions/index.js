@@ -123,7 +123,7 @@ exports.verifyAndDeductStock = onCall(
           customerEmail = orderData.customerInfo.email;
 
           for (const item of orderData.items) {
-            const productRef = db.collection("products").doc(item.productId); // Fixed case sensitivity
+            const productRef = db.collection("Products").doc(item.productId); // Fixed case sensitivity
             const productDoc = await transaction.get(productRef);
 
             if (!productDoc.exists) throw new Error(`Product not found: ${item.productId}`);

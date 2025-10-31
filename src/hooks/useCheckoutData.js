@@ -1,30 +1,29 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "./useCartStore";
-import {
-  // collection, addDoc, serverTimestamp, doc, getDoc,
-  doc, // Keep doc, getDoc for profile fetch
-  getDoc,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, app } from "@/firebase";
+import { auth, app } from "@/firebase"; // Keep 'app' for appId
 import { calculateSubTotal } from "@/lib/cartUtils";
 
 const SHIPPING_COST = 50.0;
-const appId = app.options.appId;
+// const appId = app.options.appId; // No longer needed for this path
 
 /**
  * Fetches the user's profile document from Firestore.
  */
 const fetchProfileFromFirestore = async (db, userId) => {
   if (!db || !userId) return null;
-  // NOTE: Assuming profile path is correct
-  const profileDocPath = `artifacts/${appId}/users/${userId}/profile/details`;
+  
+  // --- 🛠️ FIX: Use the new, simple path ---
+  const profileDocPath = `users/${userId}`;
   const profileDocRef = doc(db, profileDocPath);
+  // ------------------------------------
 
   try {
     const docSnap = await getDoc(profileDocRef);
-    return docSnap.exists() ? docSnap.data() : null;
+    // We check for 'name' as a proxy for "is profile complete?"
+    return docSnap.exists() && docSnap.data().name ? docSnap.data() : null;
   } catch (e) {
     console.error("Error fetching profile document: ", e);
     return null;
@@ -36,10 +35,8 @@ export const useCheckoutLogic = ({ db }) => {
   const { cartItems: mainCartItems, buyNowItem } = useCartStore();
   const clearCart = useCartStore((state) => state.clearCart);
 
-  // 🔥 DETERMINE THE FINAL ITEMS FOR CHECKOUT
   const checkoutItems = buyNowItem ? [buyNowItem] : mainCartItems;
 
-  // State Management
   const [customerInfo, setCustomerInfo] = useState(null);
   const [user, setUser] = useState(null);
   const [userId, setUserId] = useState(null);
@@ -50,7 +47,6 @@ export const useCheckoutLogic = ({ db }) => {
   const subtotal = calculateSubTotal(checkoutItems);
   const totalAmount = subtotal + SHIPPING_COST;
 
-  // --- Core Logic: Check Profile Status ---
   const checkProfileStatus = useCallback(
     async (firebaseUser) => {
       if (!firebaseUser || !db) {
@@ -66,6 +62,7 @@ export const useCheckoutLogic = ({ db }) => {
         setCustomerInfo(firestoreProfile);
         setIsLoading(false);
       } else {
+        // Profile is incomplete or doesn't exist, redirect to details page
         console.log(
           "Profile details missing. Redirecting to details setup/review."
         );
@@ -76,7 +73,6 @@ export const useCheckoutLogic = ({ db }) => {
     [db, navigate]
   );
 
-  // --- EFFECT: Auth Listener & Profile Load ---
   useEffect(() => {
     if (!db) {
       console.error("Firestore DB instance not passed.");
@@ -96,6 +92,7 @@ export const useCheckoutLogic = ({ db }) => {
         if (checkoutItems.length > 0) {
           console.log("User not authenticated. Redirecting to login.");
           setIsLoading(false);
+          // Redirect to signup, then to details, then back to checkout
           navigate("/signup", { state: { from: "/detailspage" } });
         } else {
           setIsLoading(false);
@@ -106,11 +103,6 @@ export const useCheckoutLogic = ({ db }) => {
     return () => unsubscribe();
   }, [db, checkoutItems.length, navigate, checkProfileStatus]);
 
-
-  // --- REMOVED HANDLER: PLACE ORDER (handleSaveOrderToDb) ---
-  // The Cloud Function will now handle the initial order save.
-
-
   const handleOrderSuccess = (firebaseOrderId, paymentId) => {
     clearCart();
     navigate(
@@ -119,7 +111,6 @@ export const useCheckoutLogic = ({ db }) => {
   };
 
   return {
-    // State
     isLoading,
     userId,
     user,
@@ -129,12 +120,10 @@ export const useCheckoutLogic = ({ db }) => {
     totalAmount,
     isProcessing,
     orderError,
-    appId,
-    // Handlers
+    appId: app.options.appId, // Keep appId just in case
     navigate,
     setOrderError,
     setIsProcessing,
-    // handleSaveOrderToDb REMOVED
     handleOrderSuccess,
   };
 };

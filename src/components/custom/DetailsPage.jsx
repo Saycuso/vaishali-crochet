@@ -1,5 +1,3 @@
-// src/components/custom/DetailsPage.jsx
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -13,21 +11,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { auth, db, app } from "@/firebase";
+import { auth, db } from "@/firebase"; // Removed 'app'
 import { onAuthStateChanged } from "firebase/auth";
 
-// Define the global app ID for Firestore paths (from your previous files)
-const appId = app.options.appId;
+// const appId = app.options.appId; // No longer needed
 
 const DetailsPage = () => {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [currentUid, setCurrentUid] = useState(null); // New state to hold the confirmed UID
+  const [currentUid, setCurrentUid] = useState(null);
   const [pincode, setPincode] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userEmail, setUserEmail] = useState(""); // <-- NEW STATE for email
+  const [userEmail, setUserEmail] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,26 +34,30 @@ const DetailsPage = () => {
   // --- Helper Function for Fetching ---
   const fetchProfile = useCallback(
     async (uid) => {
-      // 🛑 CRITICAL FIX: Use the correct path structure! 🛑
-      // Path: /artifacts/{appId}/users/{userId}/profile/details
-      const profileDocPath = `artifacts/${appId}/users/${uid}/profile/details`;
+      // --- 🛠️ FIX: Use the new, simple path ---
+      const profileDocPath = `users/${uid}`;
       const userDocRef = doc(db, profileDocPath);
+      // ------------------------------------
 
       try {
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
-          if (redirectAfterSave === "/checkout" && !isManualEdit) {
+          const data = docSnap.data();
+          
+          // Check if profile is complete. If so, redirect from checkout
+          const profileIsComplete = data.name && data.phone && data.address && data.pincode;
+          
+          if (profileIsComplete && redirectAfterSave === "/checkout" && !isManualEdit) {
             console.log(
-              "Profile exists & came from checkout. Skipping details form."
+              "Profile exists & is complete. Skipping details form."
             );
             setIsLoading(false);
             navigate("/checkout", { replace: true });
-            return; // Stop execution
+            return;
           }
-          // If we didn't skip (because they came from somewhere else or it was a manual edit),
-          // we pre-fill the form for review/edit.
-          const data = docSnap.data();
+          
+          // Pre-fill the form for review/edit
           setName(data.name || "");
           setPhone(data.phone || "");
           setAddress(data.address || "");
@@ -87,23 +88,19 @@ const DetailsPage = () => {
 
   // --- EFFECT: AUTH STATE LISTENER & PROFILE FETCH ---
   useEffect(() => {
-    // 1. Start the Auth Listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is logged in. Get the UID and start fetch process.
         setCurrentUid(user.uid);
-        setUserEmail(user.email || ""); // <-- CAPTURE EMAIL HERE
+        setUserEmail(user.email || "");
         fetchProfile(user.uid);
       } else {
-        // User is NOT logged in. Redirect to Signup.
         setCurrentUid(null);
-        setUserEmail(""); // Reset email state
+        setUserEmail("");
         console.error("User not authenticated. Redirecting to login.");
         setIsLoading(false);
         navigate("/signup", { state: { from: "/detailspage" } });
       }
     });
-    // Cleanup the listener
     return () => unsubscribe();
   }, [navigate, fetchProfile]);
 
@@ -115,7 +112,6 @@ const DetailsPage = () => {
       return;
     }
 
-    // Basic validation
     if (!name || !phone || !address || !pincode) {
       setError("Please fill in all fields.");
       return;
@@ -123,19 +119,20 @@ const DetailsPage = () => {
 
     setIsLoading(true);
     setError(null);
+    // We add email here, but it's not from the form
     const profileData = { name, phone, address, pincode, email: userEmail };
 
     try {
-      // 1. **CRITICAL**: SAVE PROFILE TO FIRESTORE
-      // Path: /artifacts/{appId}/users/{userId}/profile/details
-      const profileDocPath = `artifacts/${appId}/users/${currentUid}/profile/details`;
+      // --- 🛠️ FIX: Use the new, simple path ---
+      const profileDocPath = `users/${currentUid}`;
       const userDocRef = doc(db, profileDocPath);
+      // ------------------------------------
 
+      // Use { merge: true } so we don't overwrite other user fields by accident
       await setDoc(userDocRef, profileData, { merge: true });
 
-      console.log(`User profile saved to Firestore under ${profileDocPath}`);
+      console.log(`User profile saved to Firestore at ${profileDocPath}`);
 
-      // 2. REDIRECT
       navigate(redirectAfterSave, { replace: true });
     } catch (e) {
       console.error("Error saving document: ", e);
@@ -153,9 +150,7 @@ const DetailsPage = () => {
     );
   }
 
-  // If we reach here, currentUid is confirmed and we can render the form
   return (
-    // ... (rest of your return block)
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
@@ -166,7 +161,6 @@ const DetailsPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* ... Input fields ... */}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -212,7 +206,7 @@ const DetailsPage = () => {
               <Input
                 id="email"
                 type="email"
-                disabled // <-- Disable editing
+                disabled
                 value={userEmail}
                 className="bg-gray-100 cursor-not-allowed"
               />
