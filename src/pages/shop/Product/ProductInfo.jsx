@@ -65,7 +65,7 @@ const ProductInfo = ({ product, selectedVariant }) => {
         <div className="mt-3 flex items-baseline gap-2">
           {product.originalprice && (
             <div className="flex-col flex items-baseline gap-2">
-              <span className="text-4xl font-semibold text-red-600">
+              <span className="text-2xl font-semibold text-red-600">
                 {discountPercentage}%
               </span>
               <span className="text-m text-gray-500 line-through">
