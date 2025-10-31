@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "@/firebase"; // Removed 'app' as it's not used here
+import { db, auth } from "@/firebase";
 import {
   Card,
   CardHeader,
@@ -20,9 +20,6 @@ import {
 import OrderDateDisplay from "@/components/ui/orderdatedisplay";
 import { Button } from "@/components/ui/button";
 
-// const appId = app.options.appId; // No longer needed
-
-// --- 🛠️ FIX: Updated STATUS_MAP ---
 const STATUS_MAP = {
   // Backend statuses
   created: { label: "Payment Pending", color: "bg-yellow-100 text-yellow-700" },
@@ -36,7 +33,6 @@ const STATUS_MAP = {
   Cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700" },
   Pending: { label: "Awaiting Payment", color: "bg-yellow-100 text-yellow-700" },
 };
-// ------------------------------
 
 const OrderTrackingDetails = () => {
   const { orderId } = useParams();
@@ -54,10 +50,7 @@ const OrderTrackingDetails = () => {
 
     const fetchOrder = async (userId) => {
       try {
-        // --- 🛠️ FIX: Updated Firestore path ---
         const orderDocPath = `users/${userId}/orders/${orderId}`;
-        // ------------------------------------
-        
         const docRef = doc(db, orderDocPath);
         const docSnap = await getDoc(docRef);
 
@@ -87,7 +80,6 @@ const OrderTrackingDetails = () => {
     return () => unsubscribe();
   }, [orderId, navigate]);
 
-  // This is a fallback calculation, but the 'order.totalAmount' is preferred
   const calculateTotal = (items) => {
     return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
@@ -102,6 +94,7 @@ const OrderTrackingDetails = () => {
   }
 
   if (error || !order) {
+    // ... (Error rendering)
     return (
       <div className="p-4 flex flex-col items-center justify-center min-h-[80vh]">
         <Card className="w-full max-w-md shadow-lg border-red-400">
@@ -122,10 +115,12 @@ const OrderTrackingDetails = () => {
     );
   }
 
-  // Use "Processing" as the final fallback
   const orderStatus = STATUS_MAP[order.status] || STATUS_MAP.Processing;
-  // Use the pre-calculated totalAmount from the order, or fall back to client-side calculation
   const totalAmount = order.totalAmount || calculateTotal(order.items || []);
+  
+  // --- 🛠️ FIX: Check if the order is in a "paid" state ---
+  const isPaid = order.status === 'captured' || order.status === 'Shipped' || order.status === 'Delivered';
+  // ----------------------------------------------------
 
   return (
     <div className="min-h-screen bg-gray-50 px-3 py-4">
@@ -138,7 +133,6 @@ const OrderTrackingDetails = () => {
           >
             <ChevronLeft className="h-4 w-4 text-white" />
           </button>
-
           <div className="mt-6 text-center">
             <h1 className="text-lg font-semibold">Order Details</h1>
             <p className="text-xs mt-0.5 opacity-90">
@@ -155,8 +149,8 @@ const OrderTrackingDetails = () => {
           </div>
         </div>
         
-        {/* --- 🛠️ ADDED PAYMENT PENDING MESSAGE --- */}
-        {(order.status === 'created' || order.status === 'Pending') && (
+        {/* Payment Pending/Failed Message */}
+        {(!isPaid) && ( // Show this message if not in a paid state
           <div className="p-4 border-b bg-yellow-50 border-yellow-200">
             <CardContent className="p-0">
               <p className="text-sm font-medium text-yellow-800 text-center">
@@ -166,12 +160,14 @@ const OrderTrackingDetails = () => {
             </CardContent>
           </div>
         )}
-        {/* --- 🛠️ END OF BLOCK --- */}
 
-
-        {/* Total Paid */}
+        {/* Total Paid/Amount */}
         <div className="p-4 border-b">
-          <h2 className="text-sm font-medium text-gray-600">Total Paid</h2>
+          {/* --- 🛠️ FIX: Conditional Text --- */}
+          <h2 className="text-sm font-medium text-gray-600">
+            {isPaid ? "Total Paid" : "Total Amount"}
+          </h2>
+          {/* ------------------------------- */}
           <p className="text-2xl font-bold text-gray-900 mt-1">
             ₹{totalAmount.toFixed(2)}
           </p>
@@ -252,8 +248,8 @@ const OrderTrackingDetails = () => {
           </div>
         </div>
 
-        {/* Payment ID */}
-        {order.paymentId && (
+        {/* Payment ID (Only show if payment was successful) */}
+        {order.paymentId && isPaid && (
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-800 mb-1">
               Payment ID
