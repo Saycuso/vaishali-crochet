@@ -87,6 +87,7 @@ const OrderTrackingDetails = () => {
     return () => unsubscribe();
   }, [orderId, navigate]);
 
+  // This is a fallback calculation, but the 'order.totalAmount' is preferred
   const calculateTotal = (items) => {
     return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
@@ -123,7 +124,8 @@ const OrderTrackingDetails = () => {
 
   // Use "Processing" as the final fallback
   const orderStatus = STATUS_MAP[order.status] || STATUS_MAP.Processing;
-  const totalAmount = calculateTotal(order.items || []);
+  // Use the pre-calculated totalAmount from the order, or fall back to client-side calculation
+  const totalAmount = order.totalAmount || calculateTotal(order.items || []);
 
   return (
     <div className="min-h-screen bg-gray-50 px-3 py-4">
@@ -152,12 +154,26 @@ const OrderTrackingDetails = () => {
             </Badge>
           </div>
         </div>
+        
+        {/* --- 🛠️ ADDED PAYMENT PENDING MESSAGE --- */}
+        {(order.status === 'created' || order.status === 'Pending') && (
+          <div className="p-4 border-b bg-yellow-50 border-yellow-200">
+            <CardContent className="p-0">
+              <p className="text-sm font-medium text-yellow-800 text-center">
+                This payment was not completed. To buy these items, please go back
+                and place a new order.
+              </p>
+            </CardContent>
+          </div>
+        )}
+        {/* --- 🛠️ END OF BLOCK --- */}
+
 
         {/* Total Paid */}
         <div className="p-4 border-b">
           <h2 className="text-sm font-medium text-gray-600">Total Paid</h2>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            ₹{order.totalAmount ? order.totalAmount.toFixed(2) : totalAmount.toFixed(2)}
+            ₹{totalAmount.toFixed(2)}
           </p>
         </div>
 
