@@ -37,7 +37,7 @@ export const FeaturedProductCard = ({ product }) => {
         </div>
 
         {/* Content */}
-        <CardContent className="p-4 flex-1">
+        <CardContent className="p-2 flex-1">
           <CardTitle
             className="text-lg font-semibold text-gray-800 line-clamp-2"
             title={name} // Title attribute will use main product name
