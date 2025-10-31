@@ -2,14 +2,24 @@ import {
   Card,
   CardContent,
   CardFooter,
-  CardDescription,
   CardTitle,
 } from "@/components/ui/card";
 import { Heart, Star } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export const ProductCard = ({ product, showWishlistButton = true }) => {
@@ -17,27 +27,58 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
   const [userId, setUserId] = useState(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isProcessingWishlist, setIsProcessingWishlist] = useState(false);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   const imageUrl =
     product?.images?.[0] ||
     product?.variants?.[0]?.images?.[0] ||
     "https://placehold.co/400x300?text=No+Image";
 
-  // 🛠️ FIX 1: Read the correct stockQuantity field from Firestore
-  // The 'stockQuantity' is the field you manually added in the database.
-  const stockQuantity = typeof product?.stockQuantity === "number" ? product.stockQuantity : 0; 
-  
+  const stockQuantity =
+    typeof product?.stockQuantity === "number" ? product.stockQuantity : 0;
+
   const hasDiscount =
-    product?.originalprice &&
-    product?.originalprice > product?.price;
+    product?.originalprice && product?.originalprice > product?.price;
 
   const discountPercent = hasDiscount
-    ? Math.round(((product.originalprice - product.price) / product.originalprice) * 100)
+    ? Math.round(
+        ((product.originalprice - product.price) / product.originalprice) * 100
+      )
     : 0;
 
+  // 🧠 FETCH REAL REVIEWS
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!product?.id) return;
+      try {
+        const reviewsRef = collection(db, "reviews");
+        const q = query(reviewsRef, where("productId", "==", product.id));
+        const snapshot = await getDocs(q);
+
+        const fetchedReviews = snapshot.docs.map((doc) => doc.data());
+        if (fetchedReviews.length > 0) {
+          const total = fetchedReviews.reduce(
+            (sum, review) => sum + (review.rating || 0),
+            0
+          );
+          setAvgRating((total / fetchedReviews.length).toFixed(1));
+          setReviewCount(fetchedReviews.length);
+        } else {
+          setAvgRating(0);
+          setReviewCount(0);
+        }
+      } catch (error) {
+        console.error("Error fetching product reviews:", error);
+      }
+    };
+
+    fetchReviews();
+  }, [product.id]);
+
+  // 🧠 WISHLIST LOGIC (same as before)
   useEffect(() => {
     if (!showWishlistButton) return;
-    // ... (Wishlist logic remains unchanged) ...
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -102,11 +143,12 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
   };
 
   return (
-    <Card className="rounded-2xl shadow-md p-0 bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group gap-2">
-      
-      {/* Discount Badge on Image */}
-      {/* 🛠️ FIX 2: Use stockQuantity here */}
-      {hasDiscount && stockQuantity > 0 && ( 
+    <Card
+      className="rounded-2xl shadow-md bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group gap-2"
+      onClick={() => navigate(`/shop/${product.id}`)}
+    >
+      {/* Discount Badge */}
+      {hasDiscount && stockQuantity > 0 && (
         <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
           -{discountPercent}%
         </span>
@@ -117,7 +159,9 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
         <button
           onClick={handleWishlistToggle}
           disabled={isProcessingWishlist}
-          className={`absolute top-3 right-3 bg-white/80 hover:bg-white rounded-full p-2 shadow-sm z-10 ${isProcessingWishlist ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`absolute top-3 right-3 bg-white/80 hover:bg-white rounded-full p-2 shadow-sm z-10 ${
+            isProcessingWishlist ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <Heart
             className={`w-4 h-4 transition-colors duration-200 ${
@@ -136,8 +180,6 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
           alt={product.name}
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
         />
-
-        {/* 🛠️ FIX 3: Out of Stock Overlay - Show only when stockQuantity is exactly 0 */}
         {stockQuantity === 0 && (
           <CardTitle className="absolute inset-0 bg-black/50 text-white font-bold flex items-center justify-center text-base">
             Out of Stock
@@ -151,25 +193,29 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
           {product.name}
         </h3>
 
-        {/* Rating */}
+        {/* Ratings from Firestore */}
         <div className="flex items-center gap-2 mt-1">
           <div className="flex text-yellow-400 text-xs">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} size={12} fill="#facc15" stroke="none" />
+              <Star
+                key={i}
+                size={12}
+                fill={i < Math.round(avgRating) ? "#facc15" : "none"}
+                stroke="#facc15"
+              />
             ))}
-            <span className="text-[11px] text-gray-500 ml-1">(0)</span>
           </div>
+          <span className="text-[11px] text-gray-600">
+            {avgRating} ({reviewCount})
+          </span>
         </div>
-
       </CardContent>
 
-      {/* Price Section */}
       <CardFooter className="px-3 pb-4 flex flex-col items-start gap-1">
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-semibold text-gray-800">
             ₹{product.price}
           </span>
-
           {hasDiscount && (
             <span className="text-sm text-gray-800 opacity-80 line-through">
               ₹{product.originalprice}
@@ -177,7 +223,6 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
           )}
         </div>
 
-        {/* Micro Text */}
         {hasDiscount && (
           <span className="text-[11px] text-red-600 font-medium">
             Limited time deal
