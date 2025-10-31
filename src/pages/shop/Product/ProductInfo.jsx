@@ -5,54 +5,71 @@ import { useNavigate } from "react-router-dom";
 const ProductInfo = ({ product, selectedVariant }) => {
   const addItem = useCartStore((state) => state.addItem);
   const toggleCart = useCartStore((state) => state.toggleCart);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  // --- 🛠️ FIX: Get cartItems from the store ---
+  const cartItems = useCartStore((state) => state.cartItems);
+  // ------------------------------------------
 
   if (!product || !selectedVariant) {
     return null;
   }
+
+  // --- 🛠️ FIX: Real-time stock checking logic ---
+  // 1. Get the true stock quantity from the *selected variant*
+  const stockQuantity = selectedVariant.stockQuantity || 0;
+
+  // 2. Find this specific item in the cart
+  const itemInCart = cartItems.find(item => item.id === selectedVariant.id);
+  const quantityInCart = itemInCart ? itemInCart.quantity : 0;
+
+  // 3. Determine button states
+  const isOutOfStock = stockQuantity <= 0; // Product is sold out
+  const isCartAtMax = quantityInCart >= stockQuantity; // User already has all available stock in their cart
+  // ----------------------------------------------
 
   const createItemToAdd = (isBuyNow = false) => {
     return {
       ...product,
       ...selectedVariant,
       id: selectedVariant.id || product.id,
-      // Add a flag to indicate if this is a "Buy Now" item for special handling if needed
       isBuyNow: isBuyNow,
-      quantity: 1, // Always add 1 item
+      quantity: 1, 
+      // stockQuantity is already on selectedVariant
     };
   };
+
   const handleAddToCart = () => {
     const itemToAdd = createItemToAdd(false);
-    addItem(itemToAdd, false);
+    addItem(itemToAdd, false); // addItem logic in your store handles incrementing
     toggleCart(true);
-    console.log(
-      `Added 1 of ${selectedVariant.name} (ID: ${itemToAdd.id}) to cart.`
-    );
   };
+
   const handleBuyNow = () => {
     const itemToAdd = createItemToAdd(true);
-
-    // 1. Add item to cart store
-    addItem(itemToAdd, true);
-
-    // 2. DO NOT open cart sidebar (toggleCart(false))
-
-    // 3. Redirect user directly to the checkout page
+    addItem(itemToAdd, true); // This will just set the buyNowItem
     navigate("/checkout");
-
-    console.log(
-      `Buy Now activated for ${selectedVariant.name}. Redirecting to checkout.`
-    );
   };
+  
   const currentPrice = selectedVariant.price;
   const originalprice = product.originalprice;
-  // --- 🛠️ NEW: Stock Check ---
-  const isOutOfStock = product.stockQuantity <= 0;
-  // Safely calculate the discount percentage
+
   const discountPercentage =
     originalprice && currentPrice
       ? Math.round(-((originalprice - currentPrice) / originalprice) * 100)
       : null;
+      
+  // Determine button text based on stock
+  let addButtonText = "Add to Cart";
+  let buyButtonText = "Buy Now";
+  if (isOutOfStock) {
+    addButtonText = "Out of Stock";
+    buyButtonText = "Out of Stock";
+  } else if (isCartAtMax) {
+    addButtonText = "All in Cart";
+    buyButtonText = "All in Cart";
+  }
+  // ---------------------------------------
 
   return (
     <div className="flex-1 flex flex-col justify-between mt-2">
@@ -89,20 +106,24 @@ const ProductInfo = ({ product, selectedVariant }) => {
       <div className="flex-col flex gap-4 mt-5">
         <Button
           onClick={handleAddToCart}
-          disabled={isOutOfStock}
+          // --- 🛠️ FIX: Update disabled logic ---
+          disabled={isOutOfStock || isCartAtMax}
+          // ------------------------------------
           className="flex-1 p-2 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white"
           size="lg"
         >
-          Add to Cart
+          {addButtonText}
         </Button>
         <Button
           variant="outline"
           onClick={handleBuyNow}
-          disabled={isOutOfStock}
+          // --- 🛠️ FIX: Update disabled logic ---
+          disabled={isOutOfStock || isCartAtMax}
+          // ------------------------------------
           className="flex-1 p-2 rounded-2xl border-orange-600 text-orange-600 hover:bg-orange-100"
           size="lg"
         >
-          Buy Now
+          {buyButtonText}
         </Button>
       </div>
     </div>

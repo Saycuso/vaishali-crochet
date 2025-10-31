@@ -20,7 +20,9 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const docRef = doc(db, "Products", productId);
+        // --- 🛠️ FIX: Collection name is case-sensitive ---
+        const docRef = doc(db, "products", productId);
+        // ---------------------------------------------
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -30,14 +32,18 @@ const ProductPage = () => {
           if (productData.variants && productData.variants.length > 0) {
             setSelectedVariant(productData.variants[0]);
           } else {
+            // --- 🛠️ FIX: Non-variant products need this data ---
             setSelectedVariant({
+              id: productData.id, // <-- Added ID
               name: productData.name,
               images: productData.images,
               price: productData.price,
+              stockQuantity: productData.stockQuantity, // <-- Added stock
             });
+            // ------------------------------------------------
           }
         } else {
-          console.log("this is the productId", docSnap.id);
+          console.log("Product not found:", productId);
           navigate("/shop");
         }
       } catch (error) {
