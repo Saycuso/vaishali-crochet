@@ -21,7 +21,7 @@ const ProductPage = () => {
       try {
         setLoading(true);
         // --- 🛠️ FIX: Collection name is case-sensitive ---
-        const docRef = doc(db, "products", productId);
+        const docRef = doc(db, "Products", productId);
         // ---------------------------------------------
         const docSnap = await getDoc(docRef);
 
