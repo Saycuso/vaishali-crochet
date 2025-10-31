@@ -46,7 +46,8 @@ const ProductInfo = ({ product, selectedVariant }) => {
   };
   const currentPrice = selectedVariant.price;
   const originalprice = product.originalprice;
-
+  // --- 🛠️ NEW: Stock Check ---
+  const isOutOfStock = product.stockQuantity <= 0;
   // Safely calculate the discount percentage
   const discountPercentage =
     originalprice && currentPrice
@@ -88,6 +89,7 @@ const ProductInfo = ({ product, selectedVariant }) => {
       <div className="flex-col flex gap-4 mt-5">
         <Button
           onClick={handleAddToCart}
+          disabled={isOutOfStock}
           className="flex-1 p-2 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white"
           size="lg"
         >
@@ -96,6 +98,7 @@ const ProductInfo = ({ product, selectedVariant }) => {
         <Button
           variant="outline"
           onClick={handleBuyNow}
+          disabled={isOutOfStock}
           className="flex-1 p-2 rounded-2xl border-orange-600 text-orange-600 hover:bg-orange-100"
           size="lg"
         >

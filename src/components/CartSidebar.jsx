@@ -78,39 +78,97 @@ const CartSidebar = () => {
                 Your cart is empty.
               </p>
             ) : (
-              cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center space-x-4 border-b pb-4"
-                >
-                  <img
-                    src={
-                      item.images?.[0]?.url ||
-                      "https://placehold.co/80x80/cccccc/333333?text=Product"
-                    }
-                    alt={item.name}
-                    className="w-20 h-20 object-cover rounded-md flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">
-                      {item.name}
-                    </p>
-                    {item.size && (
-                      <p className="text-sm text-gray-500">Size: {item.size}</p>
-                    )}
-                    <p className="font-bold text-green-600">₹{item.price}</p>
-                  </div>
+              cartItems.map((item) => {
+                // --- 🛠️ STOCK CHECK LOGIC ---
+                // Disable the Plus button if current quantity meets or exceeds stockQuantity
+                const isMaxStock = item.quantity >= item.stockQuantity;
+                // -----------------------------
 
-                  {/* Quantity Controls and Delete */}
-                  <div className="flex flex-col items-end space-y-2">
-                    {/* Quantity Selector */}
-                    <div className="flex items-center border rounded-lg overflow-hidden">
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center space-x-4 border-b pb-4"
+                  >
+                    <img
+                      src={
+                        item.images?.[0]?.url ||
+                        "https://placehold.co/80x80/cccccc/333333?text=Product"
+                      }
+                      alt={item.name}
+                      className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {item.name}
+                      </p>
+                      {item.size && (
+                        <p className="text-sm text-gray-500">Size: {item.size}</p>
+                      )}
+                      <p className="font-bold text-green-600">₹{item.price}</p>
+                    </div>
+
+                    {/* Quantity Controls and Delete */}
+                    <div className="flex flex-col items-end space-y-2">
+                      {/* Quantity Selector */}
+                      <div className="flex items-center border rounded-lg overflow-hidden">
+                        <Button
+                          variant="ghost"
+                          className="w-6 h-6 p-0 text-gray-700 hover:bg-gray-100"
+                          onClick={() => removeItem(item.id)} // Calls removeItem (decrements by 1)
+                        >
+                          {/* Minus Icon */}
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 12H4"
+                            ></path>
+                          </svg>
+                        </Button>
+                        <span className="w-8 text-center text-sm font-medium">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          className="w-6 h-6 p-0 text-gray-700 hover:bg-gray-100"
+                          // --- 🛠️ DISABLED IF MAX STOCK IS REACHED ---
+                          disabled={isMaxStock}
+                          // ------------------------------------------
+                          onClick={() => addItem(item)} // Calls addItem (increments by 1)
+                        >
+                          {/* Plus Icon */}
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 4v16m8-8H4"
+                            ></path>
+                          </svg>
+                        </Button>
+                      </div>
+
+                      {/* Delete Button */}
                       <Button
                         variant="ghost"
-                        className="w-6 h-6 p-0 text-gray-700 hover:bg-gray-100"
-                        onClick={() => removeItem(item.id)} // Calls removeItem (decrements by 1)
+                        size="icon"
+                        className="w-6 h-6 p-0 text-red-500 hover:bg-red-50"
+                        onClick={() => deleteItem(item.id)} // Calls deleteItem (removes all)
                       >
-                        {/* Minus Icon */}
+                        {/* Trash Icon */}
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -122,62 +180,14 @@ const CartSidebar = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth="2"
-                            d="M20 12H4"
-                          ></path>
-                        </svg>
-                      </Button>
-                      <span className="w-8 text-center text-sm font-medium">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        className="w-6 h-6 p-0 text-gray-700 hover:bg-gray-100"
-                        onClick={() => addItem(item)} // Calls addItem (increments by 1)
-                      >
-                        {/* Plus Icon */}
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 4v16m8-8H4"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.993-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           ></path>
                         </svg>
                       </Button>
                     </div>
-
-                    {/* Delete Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-6 h-6 p-0 text-red-500 hover:bg-red-50"
-                      onClick={() => deleteItem(item.id)} // Calls deleteItem (removes all)
-                    >
-                      {/* Trash Icon */}
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.993-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        ></path>
-                      </svg>
-                    </Button>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
