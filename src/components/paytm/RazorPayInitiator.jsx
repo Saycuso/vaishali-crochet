@@ -1,10 +1,9 @@
 import React from "react";
 import { Button } from "../ui/button";
-import { app, auth } from "@/firebase"; // 👈 1. IMPORTED 'auth'
-import { getFunctions, httpsCallable } from "firebase/functions"; // 👈 2. CORRECTED IMPORT PATH
+import { app, auth } from "@/firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { Loader2 } from "lucide-react";
 
-// --- Core Utility: Loads Razorpay Checkout Script ---
 const loadScript = (src) => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
@@ -15,28 +14,25 @@ const loadScript = (src) => {
   });
 };
 
-// --- 1. INITIALIZE FIREBASE FUNCTIONS ---
-const functions = getFunctions(app, "us-central1"); // Use your function's region
+const functions = getFunctions(app, "us-central1");
 const createOrderFunction = httpsCallable(functions, "createOrder");
 const verifyPaymentFunction = httpsCallable(functions, "verifyAndDeductStock");
 
 const RazorpayInitiator = ({
-  totalAmount,
+  // 🛠️ REMOVED totalAmount,
   onOrderError,
   isProcessing,
   setIsProcessing,
   customerInfo,
   onOrderSuccess,
-
-  // New props we just passed down
   cartItems,
-  subtotal,
+  // 🛠️ REMOVED subtotal,
+  // The 'userId' and 'appId' props are not used in this component, so they are removed
 }) => {
   const handleInitiatePayment = async () => {
     onOrderError(null);
     setIsProcessing(true);
 
-    // 0. Load the Razorpay script
     const scriptLoaded = await loadScript(
       "https://checkout.razorpay.com/v1/checkout.js"
     );
@@ -47,49 +43,41 @@ const RazorpayInitiator = ({
     }
 
     try {
-      // --- 👇 3. ADDED TOKEN REFRESH LOGIC ---
       if (!auth.currentUser) {
-        // This should ideally not be hit if your page logic is correct,
-        // but it's a good safeguard.
         throw new Error("User is not logged in. Please log in again.");
       }
-      // Force refresh the user's ID token to ensure it's not stale
       await auth.currentUser.getIdToken(true);
-      // ------------------------------------
 
-      // --- STEP 1: PREPARE DATA for the Cloud Function ---
-      // We must match the database structure EXACTLY
+      // --- 🛠️ STEP 1: PREPARE DATA (Prices removed) ---
       const orderData = {
-        totalAmountInPaise: Math.round(totalAmount * 100),
-        subtotal: subtotal,
-        shipping: 50, // Assuming 50 is your shipping cost
+        // totalAmountInPaise, subtotal, and shipping are now calculated ON THE SERVER
         customerInfo: customerInfo,
         items: cartItems.map((item) => ({
-          productId: item.id, // --- 🛠️ CRITICAL MAPPING ---
+          productId: item.id,
           name: item.name,
-          price: item.price,
+          price: item.price, // Ignored by backend, but good for logs
           quantity: item.quantity,
           thumbnail: item.images[0] || item?.variants[0]?.images[0],
         })),
       };
+      // ------------------------------------------
 
       // --- STEP 2: Call the 'createOrder' Cloud Function ---
-      // This function creates the Razorpay order AND saves the 'created' order to Firestore
       const result = await createOrderFunction(orderData);
+      // The 'amount' returned here is now the SECURE server-calculated amount
       const { orderId, amount, currency, key_id } = result.data;
 
       // --- STEP 3: CONFIGURE RAZORPAY POPUP ---
       const options = {
-        key: key_id, // Use the Key ID from the function
-        amount: amount, // Amount in paise
+        key: key_id,
+        amount: amount, // Use the SECURE amount from the server
         currency: currency,
         name: "Vaishalis crochet",
         description: `Order ID: ${orderId}`,
-        order_id: orderId, // Razorpay Order ID
+        order_id: orderId,
 
-        // --- STEP 4: PAYMENT HANDLER ---
         handler: async function (response) {
-          setIsProcessing(true); // Re-engage processing for verification
+          setIsProcessing(true); 
 
           const verificationData = {
             razorpay_order_id: response.razorpay_order_id,
@@ -98,17 +86,13 @@ const RazorpayInitiator = ({
           };
 
           try {
-            // --- 5. ADDED TOKEN REFRESH FOR VERIFICATION ---
             if (auth.currentUser) {
                 await auth.currentUser.getIdToken(true);
             }
-            // --------------------------------------------
 
-            // --- STEP 5: Call the 'verifyAndDeductStock' Cloud Function ---
             const verifyResult = await verifyPaymentFunction(verificationData);
 
             if (verifyResult.data.status === "success") {
-              // Payment is PROVEN legit! ✅ Stock is deducted!
               console.log(
                 `Payment Verified! Order: ${verifyResult.data.orderId}`
               );
@@ -117,15 +101,13 @@ const RazorpayInitiator = ({
                 response.razorpay_payment_id
               );
             } else {
-              // Safeguard path for soft failure
               onOrderError("Payment successful, but verification failed.");
-              setIsProcessing(false); // 👈 CRITICAL FIX: Resets on soft failure
+              setIsProcessing(false); 
             }
           } catch (error) {
             console.error("Verification Function Failed:", error);
-            // This error comes from our *own* backend (e.g., Insufficient stock)
             onOrderError(`Verification Error: ${error.message}`);
-            setIsProcessing(false); // 👈 CRITICAL FIX: Resets on hard failure
+            setIsProcessing(false); 
           }
         },
         prefill: {
@@ -134,7 +116,7 @@ const RazorpayInitiator = ({
           contact: customerInfo.phone,
         },
         theme: {
-          color: "#ea580c", // Tailwind orange-600
+          color: "#ea580c",
         },
         modal: {
           ondismiss: () => {
@@ -145,9 +127,9 @@ const RazorpayInitiator = ({
         },
       };
 
-      // 5. Open the Razorpay Checkout Modal
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
+
     } catch (e) {
       console.error("Error during payment initiation:", e);
       onOrderError(
@@ -162,7 +144,8 @@ const RazorpayInitiator = ({
       onClick={handleInitiatePayment}
       className="w-full bg-orange-600 hover:bg-orange-700 text-white shadow-lg transition-all duration-200 py-3 text-lg"
       size="lg"
-      disabled={isProcessing || totalAmount <= 0}
+      // 🛠️ Updated disabled check
+      disabled={isProcessing || cartItems.length === 0}
     >
       {isProcessing ? (
         <>
@@ -170,7 +153,8 @@ const RazorpayInitiator = ({
           Processing Payment...
         </>
       ) : (
-        `Place Order and Pay ₹${totalAmount.toFixed(2)}`
+        // 🛠️ Updated button text (no price)
+        `Place Order and Pay`
       )}
     </Button>
   );

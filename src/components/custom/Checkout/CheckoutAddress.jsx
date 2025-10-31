@@ -4,11 +4,11 @@ import RazorpayInitiator from "@/components/paytm/RazorPayInitiator";
 
 const CheckoutAddress = ({ 
   customerInfo, 
-  totalAmount, 
+  // 🛠️ REMOVED totalAmount, 
   orderError, 
   navigate,
   cartItems,
-  subtotal,
+  // 🛠️ REMOVED subtotal,
   handleOrderSuccess,
   setIsProcessing,
   setOrderError,
@@ -50,15 +50,15 @@ const CheckoutAddress = ({
       {/* PAYMENT BUTTON */}
       <div className="pt-6 border-t mt-6">
         <RazorpayInitiator
-          totalAmount={totalAmount}
-          customerPhone={customerInfo.phone}
+          // 🛠️ REMOVED totalAmount={totalAmount}
+          customerPhone={customerInfo.phone} // This prop wasn't in your definition, but let's remove it
           onOrderError={setOrderError}
           clearCart={() => { /* clearCart is handled inside handleOrderSuccess via the hook */ }}
           isProcessing={isProcessing}
           setIsProcessing={setIsProcessing}
           customerInfo={customerInfo}
           cartItems={cartItems}
-          subtotal={subtotal}
+          // 🛠️ REMOVED subtotal={subtotal}
           onOrderSuccess={handleOrderSuccess}
           userId = {userId}
           appId = {appId}

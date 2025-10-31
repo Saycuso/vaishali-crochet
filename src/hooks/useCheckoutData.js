@@ -3,26 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { useCartStore } from "./useCartStore";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, app } from "@/firebase"; // Keep 'app' for appId
-import { calculateSubTotal } from "@/lib/cartUtils";
+import { auth, app } from "@/firebase";
+// 🛠️ No longer need calculateSubTotal
+// import { calculateSubTotal } from "@/lib/cartUtils";
 
-const SHIPPING_COST = 50.0;
-// const appId = app.options.appId; // No longer needed for this path
+// 🛠️ REMOVED SHIPPING_COST
+// const SHIPPING_COST = 50.0; 
 
-/**
- * Fetches the user's profile document from Firestore.
- */
 const fetchProfileFromFirestore = async (db, userId) => {
   if (!db || !userId) return null;
   
-  // --- 🛠️ FIX: Use the new, simple path ---
   const profileDocPath = `users/${userId}`;
   const profileDocRef = doc(db, profileDocPath);
-  // ------------------------------------
 
   try {
     const docSnap = await getDoc(profileDocRef);
-    // We check for 'name' as a proxy for "is profile complete?"
     return docSnap.exists() && docSnap.data().name ? docSnap.data() : null;
   } catch (e) {
     console.error("Error fetching profile document: ", e);
@@ -44,8 +39,10 @@ export const useCheckoutLogic = ({ db }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderError, setOrderError] = useState(null);
 
-  const subtotal = calculateSubTotal(checkoutItems);
-  const totalAmount = subtotal + SHIPPING_COST;
+  // --- 🛠️ ALL PRICE LOGIC REMOVED ---
+  // const subtotal = calculateSubTotal(checkoutItems);
+  // const totalAmount = subtotal + SHIPPING_COST;
+  // ----------------------------------
 
   const checkProfileStatus = useCallback(
     async (firebaseUser) => {
@@ -53,7 +50,6 @@ export const useCheckoutLogic = ({ db }) => {
         setIsLoading(false);
         return;
       }
-
       const firestoreProfile = await fetchProfileFromFirestore(
         db,
         firebaseUser.uid
@@ -62,7 +58,6 @@ export const useCheckoutLogic = ({ db }) => {
         setCustomerInfo(firestoreProfile);
         setIsLoading(false);
       } else {
-        // Profile is incomplete or doesn't exist, redirect to details page
         console.log(
           "Profile details missing. Redirecting to details setup/review."
         );
@@ -92,7 +87,6 @@ export const useCheckoutLogic = ({ db }) => {
         if (checkoutItems.length > 0) {
           console.log("User not authenticated. Redirecting to login.");
           setIsLoading(false);
-          // Redirect to signup, then to details, then back to checkout
           navigate("/signup", { state: { from: "/detailspage" } });
         } else {
           setIsLoading(false);
@@ -116,11 +110,11 @@ export const useCheckoutLogic = ({ db }) => {
     user,
     customerInfo,
     cartItems: checkoutItems,
-    subtotal,
-    totalAmount,
+    // 🛠️ REMOVED subtotal,
+    // 🛠️ REMOVED totalAmount,
     isProcessing,
     orderError,
-    appId: app.options.appId, // Keep appId just in case
+    appId: app.options.appId,
     navigate,
     setOrderError,
     setIsProcessing,
