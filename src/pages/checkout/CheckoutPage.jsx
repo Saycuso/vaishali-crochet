@@ -20,7 +20,6 @@ const CheckoutPage = ({ db }) => {
     navigate,
     setOrderError,
     setIsProcessing,
-    handleSaveOrderToDb,
     handleOrderSuccess,
   } = useCheckoutLogic({ db });
 
@@ -89,7 +88,6 @@ const CheckoutPage = ({ db }) => {
             navigate={navigate}
             cartItems={cartItems}
             subtotal={subtotal}
-            handleSaveOrderToDb={handleSaveOrderToDb}
             handleOrderSuccess={handleOrderSuccess}
             setIsProcessing={setIsProcessing}
             setOrderError={setOrderError}

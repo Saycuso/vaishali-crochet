@@ -1,9 +1,8 @@
-// src/pages/OrderTrackingDetail.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, app, auth } from "@/firebase";
+import { db, auth } from "@/firebase"; // Removed 'app' as it's not used here
 import {
   Card,
   CardHeader,
@@ -16,34 +15,31 @@ import {
   Loader2,
   Package,
   MapPin,
-  Phone,
-  User,
-  Mail,
-  ChevronLeft, // For the back button
+  ChevronLeft,
 } from "lucide-react";
 import OrderDateDisplay from "@/components/ui/orderdatedisplay";
 import { Button } from "@/components/ui/button";
 
-const appId = app.options.appId;
+// const appId = app.options.appId; // No longer needed
 
-// Define the Order Status map for consistent styling (use the same map as the card)
+// --- 🛠️ FIX: Updated STATUS_MAP ---
 const STATUS_MAP = {
-  Paid: { label: "Payment Confirmed", color: "bg-green-100 text-green-700" },
-  Processing: {
-    label: "Processing Order",
-    color: "bg-orange-100 text-orange-700",
-  },
+  // Backend statuses
+  created: { label: "Payment Pending", color: "bg-yellow-100 text-yellow-700" },
+  captured: { label: "Payment Confirmed", color: "bg-green-100 text-green-700" },
+  failed_out_of_stock: { label: "Failed (Out of Stock)", color: "bg-red-100 text-red-700" },
+  
+  // Fallback/Manual statuses
+  Processing: { label: "Processing Order", color: "bg-orange-100 text-orange-700" },
   Shipped: { label: "Shipped", color: "bg-blue-100 text-blue-700" },
   Delivered: { label: "Delivered", color: "bg-indigo-100 text-indigo-700" },
   Cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700" },
-  Pending: {
-    label: "Awaiting Payment",
-    color: "bg-yellow-100 text-yellow-700",
-  },
+  Pending: { label: "Awaiting Payment", color: "bg-yellow-100 text-yellow-700" },
 };
+// ------------------------------
 
 const OrderTrackingDetails = () => {
-  const { orderId } = useParams(); // Get the ID from the URL
+  const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +54,10 @@ const OrderTrackingDetails = () => {
 
     const fetchOrder = async (userId) => {
       try {
-        const orderDocPath = `artifacts/${appId}/users/${userId}/orders/${orderId}`;
+        // --- 🛠️ FIX: Updated Firestore path ---
+        const orderDocPath = `users/${userId}/orders/${orderId}`;
+        // ------------------------------------
+        
         const docRef = doc(db, orderDocPath);
         const docSnap = await getDoc(docRef);
 
@@ -86,9 +85,6 @@ const OrderTrackingDetails = () => {
       }
     });
     return () => unsubscribe();
-
-    // NOTE: This uses auth.currentUser, which might be null if the component loads before the auth state is ready.
-    // A more robust solution involves waiting for auth state, but for quick fix, we use the simple check.
   }, [orderId, navigate]);
 
   const calculateTotal = (items) => {
@@ -106,7 +102,6 @@ const OrderTrackingDetails = () => {
 
   if (error || !order) {
     return (
-      // ... (Error rendering from your old component can be placed here) ...
       <div className="p-4 flex flex-col items-center justify-center min-h-[80vh]">
         <Card className="w-full max-w-md shadow-lg border-red-400">
           <CardHeader>
@@ -126,10 +121,10 @@ const OrderTrackingDetails = () => {
     );
   }
 
+  // Use "Processing" as the final fallback
   const orderStatus = STATUS_MAP[order.status] || STATUS_MAP.Processing;
   const totalAmount = calculateTotal(order.items || []);
 
-  // --- RENDER FULL ORDER DETAILS (Copy/Paste the complex JSX from the old file here) ---
   return (
     <div className="min-h-screen bg-gray-50 px-3 py-4">
       <div className="max-w-md mx-auto rounded-lg overflow-hidden shadow-md bg-white border border-gray-200">
@@ -162,7 +157,7 @@ const OrderTrackingDetails = () => {
         <div className="p-4 border-b">
           <h2 className="text-sm font-medium text-gray-600">Total Paid</h2>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            ₹{totalAmount.toFixed(2)}
+            ₹{order.totalAmount ? order.totalAmount.toFixed(2) : totalAmount.toFixed(2)}
           </p>
         </div>
 
@@ -197,23 +192,22 @@ const OrderTrackingDetails = () => {
             ))}
           </ul>
         </div>
+        
         {/* Contact */}
         <div className="p-4 border-b">
           <h3 className="text-sm font-semibold mb-2 text-gray-800 flex items-center">
             <MapPin className="h-4 w-4 mr-1 text-orange-500" /> Shipping &
             Contact
           </h3>
-
           <div className="space-y-3 text-sm text-gray-700 m-4">
             <div className="flex gap-2">
               <p className="font-semibold text-gray-800 item-start flex">
                 Name:
               </p>
               <p className="flex items-start gap-2">
-                {order.customerInfo?.fullName || "N/A"}
+                {order.customerInfo?.name || "N/A"}
               </p>
             </div>
-
             <div className="flex gap-2">
               <p className="font-semibold text-gray-800 item-start flex">
                 Phone:{" "}
@@ -222,7 +216,6 @@ const OrderTrackingDetails = () => {
                 {order.customerInfo?.phone || "N/A"}
               </p>
             </div>
-
             <div className="flex gap-2">
               <p className="font-semibold text-gray-800 flex items-start">
                 Email:
@@ -231,7 +224,6 @@ const OrderTrackingDetails = () => {
                 {order.customerInfo?.email || "N/A"}
               </p>
             </div>
-
             <div className="flex">
               <p className="font-semibold text-gray-800 flex items-start">
                 Address:

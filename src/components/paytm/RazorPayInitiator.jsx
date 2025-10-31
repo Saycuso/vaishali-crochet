@@ -99,14 +99,12 @@ const RazorpayInitiator = ({
 
           try {
             // --- 5. ADDED TOKEN REFRESH FOR VERIFICATION ---
-            // Also refresh the token before the verify call
             if (auth.currentUser) {
                 await auth.currentUser.getIdToken(true);
             }
             // --------------------------------------------
 
             // --- STEP 5: Call the 'verifyAndDeductStock' Cloud Function ---
-            // This function verifies the signature AND atomically deducts stock
             const verifyResult = await verifyPaymentFunction(verificationData);
 
             if (verifyResult.data.status === "success") {
@@ -119,13 +117,15 @@ const RazorpayInitiator = ({
                 response.razorpay_payment_id
               );
             } else {
-              // Should not happen if signature is valid, but good to have
+              // Safeguard path for soft failure
               onOrderError("Payment successful, but verification failed.");
+              setIsProcessing(false); // 👈 CRITICAL FIX: Resets on soft failure
             }
           } catch (error) {
             console.error("Verification Function Failed:", error);
-            // This error comes from our *own* backend
+            // This error comes from our *own* backend (e.g., Insufficient stock)
             onOrderError(`Verification Error: ${error.message}`);
+            setIsProcessing(false); // 👈 CRITICAL FIX: Resets on hard failure
           }
         },
         prefill: {

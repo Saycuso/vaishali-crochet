@@ -9,7 +9,6 @@ const CheckoutAddress = ({
   navigate,
   cartItems,
   subtotal,
-  handleSaveOrderToDb,
   handleOrderSuccess,
   setIsProcessing,
   setOrderError,
@@ -53,7 +52,6 @@ const CheckoutAddress = ({
         <RazorpayInitiator
           totalAmount={totalAmount}
           customerPhone={customerInfo.phone}
-          onSaveOrderToDb={() => handleSaveOrderToDb(customerInfo)}
           onOrderError={setOrderError}
           clearCart={() => { /* clearCart is handled inside handleOrderSuccess via the hook */ }}
           isProcessing={isProcessing}

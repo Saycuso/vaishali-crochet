@@ -1,36 +1,39 @@
-// src/components/orders/OrderSummaryCard.jsx
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, Package, ArrowRight } from "lucide-react";
+import { Package, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import OrderDateDisplay from "@/components/ui/orderdatedisplay";
 
-// Status map with cleaner colors for the list view
+// --- 🛠️ FIX: Updated STATUS_MAP ---
 const STATUS_MAP = {
-  Paid: { label: "Confirmed", color: "bg-green-500 text-white" },
+  // Backend statuses
+  created: { label: "Payment Pending", color: "bg-yellow-500 text-white" },
+  captured: { label: "Confirmed", color: "bg-green-500 text-white" },
+  failed_out_of_stock: { label: "Failed (Out of Stock)", color: "bg-red-500 text-white" },
+  
+  // Fallback/Manual statuses
   Processing: { label: "Processing", color: "bg-orange-500 text-white" },
   Shipped: { label: "Shipped", color: "bg-blue-500 text-white" },
   Delivered: { label: "Delivered", color: "bg-indigo-500 text-white" },
   Cancelled: { label: "Cancelled", color: "bg-red-500 text-white" },
   Pending: { label: "Awaiting Payment", color: "bg-yellow-500 text-white" },
 };
+// ------------------------------
 
 const OrderHistoryListCard = ({ order }) => {
   const navigate = useNavigate();
+  // Use "Processing" as the final fallback if status is missing
   const orderStatus = STATUS_MAP[order.status] || STATUS_MAP.Processing;
 
   const totalItems = order.items?.length || 0;
   const totalAmount =
     order.totalAmount || (order.subtotal || 0) + (order.shipping || 0);
 
-  // Get the thumbnail of the first item for the visual preview
   const firstItemThumbnail = order.items?.[0]?.thumbnail;
   const firstItemName = order.items?.[0]?.name;
 
   const handleCardClick = () => {
-    // Navigates to the detail page. Ensure your App.js uses this dynamic path: /orderstracking/:orderId
     navigate(`/ordertrackingdetails/${order.id}`);
   };
 
@@ -55,26 +58,21 @@ const OrderHistoryListCard = ({ order }) => {
       <CardContent className="p-3 sm:p-6 flex justify-between items-center bg-white">
         {/* LEFT BLOCK: Image and Details */}
         <div className="flex items-center space-x-4 flex-1 min-w-0">
-          {/* 1. PRODUCT IMAGE (THE NEW STACKED BLOCK) */}
+          {/* 1. PRODUCT IMAGE */}
           <div className="flex-shrink-0 relative h-16 w-16">
-            {/* Base Image (First Item) - Always visible */}
             <img
               src={firstItemThumbnail || "https://via.placeholder.com/64"}
               alt={firstItemName || "Order Item"}
               className="h-14 w-14 object-cover rounded-md border-2 border-white shadow-md absolute top-0 left-0 z-10"
             />
-
-            {/* Stacked Indicator (Shows there's more than one item) */}
             {totalItems > 1 && (
               <div className="h-14 w-14 bg-gray-200 rounded-md border border-gray-300 absolute bottom-0 right-0 transform translate-x-1 translate-y-1">
-                {/* Optional: Add a simple '+' icon or count if desired, but this shape is enough */}
               </div>
             )}
           </div>
 
           {/* 2. ORDER DETAILS */}
           <div className="flex flex-col min-w-0">
-            {/* Date & Item Count */}
             <div className="flex flex-col text-sm text-gray-600 gap-1">
               <div className="flex items-center gap-1">
                 <OrderDateDisplay className="text-orange-500" timestamp={order.createdAt} />
@@ -86,22 +84,17 @@ const OrderHistoryListCard = ({ order }) => {
                 </span>
               </div>
             </div>
-
-            {/* Mobile Status Badge (for stacked layout) */}
           </div>
         </div>
 
         {/* RIGHT BLOCK: Total and Navigation */}
         <div className="flex items-center flex-shrink-0 ">
-          {/* Total */}
           <div className="text-right">
             <p className="text-sm font-medium text-gray-500 mb-1">Total</p>
             <p className="text-xl font-extrabold text-orange-600">
               ₹{totalAmount.toFixed(2)}
             </p>
           </div>
-
-          {/* Arrow/Indicator */}
           <ArrowRight className="h-6 w-6 text-orange-500 hidden sm:block" />
         </div>
       </CardContent>

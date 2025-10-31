@@ -2,10 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "./useCartStore";
 import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
+  // collection, addDoc, serverTimestamp, doc, getDoc,
+  doc, // Keep doc, getDoc for profile fetch
   getDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -20,6 +18,7 @@ const appId = app.options.appId;
  */
 const fetchProfileFromFirestore = async (db, userId) => {
   if (!db || !userId) return null;
+  // NOTE: Assuming profile path is correct
   const profileDocPath = `artifacts/${appId}/users/${userId}/profile/details`;
   const profileDocRef = doc(db, profileDocPath);
 
@@ -38,7 +37,6 @@ export const useCheckoutLogic = ({ db }) => {
   const clearCart = useCartStore((state) => state.clearCart);
 
   // 🔥 DETERMINE THE FINAL ITEMS FOR CHECKOUT
-  // If buyNowItem exists, use an array containing only that item. Otherwise, use the main cart.
   const checkoutItems = buyNowItem ? [buyNowItem] : mainCartItems;
 
   // State Management
@@ -72,7 +70,6 @@ export const useCheckoutLogic = ({ db }) => {
           "Profile details missing. Redirecting to details setup/review."
         );
         setIsLoading(false);
-        // Redirect to /detailspage, telling it to navigate to /checkout after completion
         navigate("/detailspage", { state: { from: "/checkout" } });
       }
     },
@@ -96,7 +93,6 @@ export const useCheckoutLogic = ({ db }) => {
       } else {
         setUser(null);
         setUserId(null);
-        // 🔥
         if (checkoutItems.length > 0) {
           console.log("User not authenticated. Redirecting to login.");
           setIsLoading(false);
@@ -110,49 +106,10 @@ export const useCheckoutLogic = ({ db }) => {
     return () => unsubscribe();
   }, [db, checkoutItems.length, navigate, checkProfileStatus]);
 
-  // --- HANDLER: PLACE ORDER ---
-  const handleSaveOrderToDb = async (currentCustomerInfo) => {
-    if (!user || !db) {
-      setOrderError(
-        "Authentication error: User not logged in or database unavailable."
-      );
-      return null;
-    }
 
-    const orderData = {
-      userId: userId,
-      // 🔥
-      items: checkoutItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        thumbnail: item.images[0] || item?.variants[0]?.images[0],
-      })),
-      customerInfo: currentCustomerInfo,
-      subtotal: subtotal,
-      shipping: SHIPPING_COST,
-      totalAmount: totalAmount,
-      status: "Pending Payment",
-      createdAt: serverTimestamp(),
-    };
+  // --- REMOVED HANDLER: PLACE ORDER (handleSaveOrderToDb) ---
+  // The Cloud Function will now handle the initial order save.
 
-    try {
-      const ordersCollectionPath = `artifacts/${appId}/users/${user.uid}/orders`;
-      const docRef = await addDoc(
-        collection(db, ordersCollectionPath),
-        orderData
-      );
-      return {
-        orderId: docRef.id,
-        orderData: orderData,
-      };
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      setOrderError("Failed to place order in the database. Please try again.");
-      return null;
-    }
-  };
 
   const handleOrderSuccess = (firebaseOrderId, paymentId) => {
     clearCart();
@@ -177,7 +134,7 @@ export const useCheckoutLogic = ({ db }) => {
     navigate,
     setOrderError,
     setIsProcessing,
-    handleSaveOrderToDb,
+    // handleSaveOrderToDb REMOVED
     handleOrderSuccess,
   };
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { auth, db, app } from "@/firebase";
+import { auth, db } from "@/firebase"; // Removed 'app' as it's not used here
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -12,14 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// The new component for each order summary card
 import OrderHistoryListCard from "./OrderHistoryListCard";
 
-const appId = app.options.appId;
-
-// The STATUS_MAP and helper functions like calculateTotal are removed
-// as they are now handled inside OrderListCard or OrderTrackingDetail.
+// const appId = app.options.appId; // No longer needed
 
 const OrderTrackingPage = () => {
   const [orders, setOrders] = useState([]);
@@ -31,17 +26,18 @@ const OrderTrackingPage = () => {
     // 1. Set up Auth Listener
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // If user is not logged in, redirect to login
         navigate("/login", { state: { from: "/orderstrackingpage" } });
         return;
       }
 
       const userId = user.uid;
 
-      // 2. Set up Firestore Realtime Listener (onSnapshot)
-      const ordersSubCollectionPath = `artifacts/${appId}/users/${userId}/orders`;
+      // --- 🛠️ FIX: Updated Firestore path ---
+      // Removed the complex 'artifacts' path
+      const ordersSubCollectionPath = `users/${userId}/orders`;
+      // ------------------------------------
+
       const ordersColRef = collection(db, ordersSubCollectionPath);
-      // Order by createdAt timestamp, newest first
       const q = query(ordersColRef, orderBy("createdAt", "desc"));
 
       const unsubscribeSnapshot = onSnapshot(
@@ -53,34 +49,25 @@ const OrderTrackingPage = () => {
             fetchedOrders.push({
               id: doc.id,
               ...data,
-              // Ensure status defaults to 'Processing' if not explicitly set
-              status: data.status || "Processing",
+              // Ensure status defaults to a known value if missing
+              status: data.status || "created", // Default to 'created'
             });
           });
-
-          // Sort is less necessary now that Firebase query uses "desc"
-          // but keeping the logic for safety on non-timestamp fields.
-          // fetchedOrders.sort(
-          //   (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-          // );
 
           setOrders(fetchedOrders);
           setIsLoading(false);
           setError(null);
         },
         (err) => {
-          // Error handling for the Firestore listener
           console.error("Firestore Order Fetch Error:", err);
           setError("Failed to load order history. Please try again.");
           setIsLoading(false);
         }
       );
 
-      // Cleanup the Firestore listener when the component unmounts or auth changes
       return () => unsubscribeSnapshot();
     });
 
-    // Cleanup the Auth listener
     return () => unsubscribeAuth();
   }, [navigate]);
 
@@ -140,7 +127,6 @@ const OrderTrackingPage = () => {
     );
   }
 
-  // --- Render Order List (Renders the clean summary cards) ---
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       <h1 className="text-2xl font-bold text-center text-gray-800 mb-8 flex items-center justify-center space-x-3">
@@ -150,7 +136,6 @@ const OrderTrackingPage = () => {
 
       <div className="space-y-6 max-w-3xl mx-auto">
         {orders.map((order) => {
-          // Pass the entire order object to the new summary card component
           return <OrderHistoryListCard key={order.id} order={order} />;
         })}
       </div>
