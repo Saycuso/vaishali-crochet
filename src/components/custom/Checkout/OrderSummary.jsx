@@ -1,8 +1,8 @@
 import React from 'react';
+// 🛠️ REMOVED: const SHIPPING_COST = 50.0;
 
-const SHIPPING_COST = 50.0;
-
-const OrderSummary = ({ cartItems, subtotal, totalAmount }) => {
+// 🛠️ REMOVED: subtotal, totalAmount from props
+const OrderSummary = ({ cartItems }) => { 
   return (
     <div className="md:w-2/5 flex flex-col space-y-6">
       <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -24,6 +24,8 @@ const OrderSummary = ({ cartItems, subtotal, totalAmount }) => {
             </div>
           ))}
         </div>
+        
+        {/* --- 🛠️ REMOVED PRICE CALCULATION BLOCK ---
         <div className="space-y-2 pt-4 border-t">
           <div className="flex justify-between text-gray-600 text-sm">
             <span>Subtotal:</span>
@@ -40,6 +42,16 @@ const OrderSummary = ({ cartItems, subtotal, totalAmount }) => {
             </span>
           </div>
         </div>
+        */}
+
+        {/* --- 🛠️ NEW: Shipping Info Box --- */}
+        <div className="space-y-2 pt-4 border-t">
+          <p className="text-sm text-gray-600">
+            The final price, including your zone-based shipping (₹80 for MH, ₹100 for rest of India), will be calculated and shown on the Razorpay payment screen.
+          </p>
+        </div>
+        {/* --- 🛠️ END FIX --- */}
+
       </div>
     </div>
   );

@@ -1,18 +1,19 @@
 import React, { useEffect } from "react";
-import { useCheckoutLogic } from "@/hooks/useCheckoutData"; // 🛠️ Using your original path
+import { useCheckoutLogic } from "@/hooks/useCheckoutData";
 import { Button } from "@/components/ui/button";
 import CheckoutAddress from "@/components/custom/Checkout/CheckoutAddress";
 import OrderSummary from "@/components/custom/Checkout/OrderSummary";
-
+// The db prop is assumed to be passed from the parent router/context
 const CheckoutPage = ({ db }) => {
+  // Use the custom hook to get all state and handlers
   const {
     isLoading,
     userId,
     user,
     customerInfo,
     cartItems,
-    // 🛠️ REMOVED subtotal,
-    // 🛠️ REMOVED totalAmount,
+    subtotal,
+    totalAmount,
     isProcessing,
     orderError,
     appId,
@@ -38,8 +39,9 @@ const CheckoutPage = ({ db }) => {
     );
   }
 
-  // 2. REDIRECTING/PROFILE MISSING STATE
+  // 2. REDIRECTING/PROFILE MISSING STATE (Should be brief)
   if (user && !customerInfo) {
+    // The hook has initiated the redirect to /detailspage, so this is a temporary screen.
     return (
       <div className="flex h-screen items-center justify-center">
         <h1 className="text-xl text-gray-600">
@@ -50,7 +52,7 @@ const CheckoutPage = ({ db }) => {
   }
 
   // 3. EMPTY CART STATE
-  if (cartItems.length === 0) { // 🛠️ Simplified check
+  if (cartItems.length === 0 && subtotal === 0) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center h-screen pt-40">
         <h1 className="text-3xl font-bold text-gray-800">
@@ -69,7 +71,7 @@ const CheckoutPage = ({ db }) => {
     );
   }
 
-  // 4. MAIN CHECKOUT RENDER
+  // 4. MAIN CHECKOUT RENDER (customerInfo is guaranteed to be present here)
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -81,11 +83,11 @@ const CheckoutPage = ({ db }) => {
           {/* LEFT COLUMN: Delivery Address & Payment */}
           <CheckoutAddress
             customerInfo={customerInfo}
-            // 🛠️ REMOVED totalAmount={totalAmount}
+            totalAmount={totalAmount}
             orderError={orderError}
             navigate={navigate}
             cartItems={cartItems}
-            // 🛠️ REMOVED subtotal={subtotal}
+            subtotal={subtotal}
             handleOrderSuccess={handleOrderSuccess}
             setIsProcessing={setIsProcessing}
             setOrderError={setOrderError}
@@ -97,8 +99,8 @@ const CheckoutPage = ({ db }) => {
           {/* RIGHT COLUMN: Order Summary */}
           <OrderSummary
             cartItems={cartItems}
-            // 🛠️ REMOVED subtotal={subtotal}
-            // 🛠️ REMOVED totalAmount={totalAmount}
+            subtotal={subtotal}
+            totalAmount={totalAmount}
           />
         </div>
       </div>

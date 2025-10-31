@@ -58,7 +58,7 @@ exports.createOrder = onCall(
       // --- 🛠️ SERVER-SIDE PRICE CALCULATION ---
       let subtotal = 0;
       const productPromises = items.map(async (item) => {
-        const productRef = db.collection("products").doc(item.productId);
+        const productRef = db.collection("Products").doc(item.productId);
         const productDoc = await productRef.get();
         if (!productDoc.exists) {
           throw new HttpsError("not-found", `Product ${item.productId} not found.`);
