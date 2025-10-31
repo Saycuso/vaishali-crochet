@@ -19,7 +19,6 @@ const VariantSelector = ({ variants, activeVariant, onSelect }) => {
           className={`
             rounded-full
             font-semibold
-            // Apply different styles based on active state
             ${activeVariant.id === variant.id 
               ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500" 
               : "border-gray-300 text-gray-700 hover:bg-gray-100"}
