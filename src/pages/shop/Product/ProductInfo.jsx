@@ -55,20 +55,20 @@ const ProductInfo = ({ product, selectedVariant }) => {
       : null;
 
   return (
-    <div className="flex-1 flex flex-col justify-between mt-7">
+    <div className="flex-1 flex flex-col justify-between mt-2">
       <div className="space-y-2">
         <h1 className="text-xl md:text-4xl font-semibold text-gray-900 text-left">
           {product.name}
         </h1>
 
         {/* Price Section */}
-        <div className="mt-3 flex items-baseline gap-2">
+        <div className="mt-3 flex items-baseline">
           {product.originalprice && (
             <div className="flex-col flex items-baseline gap-2">
               <span className="text-2xl font-semibold text-red-600">
                 {discountPercentage}%
               </span>
-              <span className="text-m text-gray-500 line-through">
+              <span className="text-xs text-gray-500 line-through">
                 M.R.P.: ₹{originalprice}
               </span>
             </div>
