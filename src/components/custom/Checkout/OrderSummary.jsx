@@ -15,34 +15,35 @@ const OrderSummary = ({ cartItems, customerInfo }) => {
   const totalAmount = shipping !== null ? subtotal + shipping : null;
 
   return (
-    // 🛠️ Changed padding and shadow to match
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <h2 className="text-lg font-semibold text-gray-800 mb-5 border-b pb-3">
-        {/* 🛠️ Made the number bold, not the whole title */}
         <span className="text-orange-600 font-extrabold mr-2">2.</span>
         Order Summary
       </h2>
 
-      {/* 🛠️ Tighter item list */}
+      {/* 🧾 Updated Item List Layout */}
       <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto mb-4">
         {cartItems.map((item) => (
-          <div key={item.id} className="flex justify-between items-center py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-900 truncate">
+          <div key={item.id} className="py-3">
+            {/* 🔹 Row 1: Item name + total price */}
+            <div className="flex justify-between items-start">
+              <p className="text-sm font-medium text-gray-900 leading-snug">
                 {item.name}
               </p>
-              <p className="text-gray-500 text-xs">
-                {item.quantity} × ₹{item.price.toFixed(2)}
+              <p className="text-sm font-semibold text-gray-900">
+                ₹{(item.price * item.quantity).toFixed(2)}
               </p>
             </div>
-            <p className="text-sm font-semibold text-gray-900">
-              ₹{(item.price * item.quantity).toFixed(2)}
+
+            {/* 🔹 Row 2: Quantity × Unit price */}
+            <p className="mt-1 text-xs text-gray-500 text-start">
+              {item.quantity} × ₹{item.price.toFixed(2)}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Price summary */}
+      {/* 💰 Price Summary */}
       <div className="space-y-2 pt-4 border-t border-gray-200 text-sm">
         <div className="flex justify-between text-gray-700">
           <span>Subtotal:</span>
@@ -62,6 +63,7 @@ const OrderSummary = ({ cartItems, customerInfo }) => {
         </div>
       </div>
 
+      {/* 📦 Note below total */}
       <p className="text-xs text-gray-500 pt-4 mt-4 border-t border-gray-100 leading-relaxed">
         {shipping
           ? `Shipping cost is estimated based on your pincode (${pincode}).`

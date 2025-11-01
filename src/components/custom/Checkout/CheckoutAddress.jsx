@@ -41,7 +41,7 @@ const CheckoutAddress = ({ customerInfo }) => {
         state: { from: "/checkout", isManualEdit: true },
       })
     }
-    className="p-0 text-orange-600 hover:text-orange-700 font-semibold"
+    className="p-0 text-orange-600 hover:text-orange-700 mt-3 font-semibold"
   >
     Change Details
   </Button>
