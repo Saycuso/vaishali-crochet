@@ -22,6 +22,7 @@ import Footer from "./components/custom/Footer";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminRoute from "./components/custom/auth/AdminRoute";
 import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import {
   BrowserRouter as Router,
   Routes,
