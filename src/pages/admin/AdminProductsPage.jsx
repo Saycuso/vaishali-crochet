@@ -13,7 +13,7 @@ const updateProductStock = httpsCallable(functions, "updateProductStock");
 
 // --- 2. Create a reusable Product Card component ---
 const ProductStockCard = ({ product }) => {
-  const [stock, setStock] = useState(product.stockQuantity);
+  const [stock, setStock] = useState(product.stockQuantity || 0);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
