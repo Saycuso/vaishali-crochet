@@ -19,6 +19,20 @@ const ProductStockCard = ({ product }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null); // To show "Saved!" or "Error!"
 
+  // --- 🛠️ FINAL FIX: Check both image paths ---
+  let imageUrl = "https://via.placeholder.com/64"; // Default fallback
+
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    // Path 1: Product has a top-level 'images' array
+    imageUrl = product.images[0]?.url;
+  } else if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+    // Path 2: Product has images inside the first variant
+    const variantImages = product.variants[0].images;
+    if (variantImages && Array.isArray(variantImages) && variantImages.length > 0) {
+      imageUrl = variantImages[0]?.url; 
+    }
+  }
+
   const handleSave = async () => {
     setIsLoading(true);
     setMessage(null);
@@ -38,7 +52,7 @@ const ProductStockCard = ({ product }) => {
     <Card className="flex flex-col sm:flex-row justify-between items-center p-4 gap-4">
       <div className="flex items-center gap-4">
         <img 
-          src={product.images[0]?.url || "https://via.placeholder.com/64"} 
+          src={imageUrl} 
           alt={product.name}
           className="w-16 h-16 object-cover rounded-md border"
         />
