@@ -26,7 +26,7 @@ const OrderSuccessPage = () => {
       </p>
       <div className="mt-6 p-4 border rounded-md bg-green-50 text-left">
         <p className="font-semibold text-gray-800">
-          Your Order ID (Firebase): <span className="text-green-700">{orderId}</span>
+          Your Order ID: <span className="text-green-700">{orderId}</span>
         </p>
         <p className="text-sm text-gray-600">
           Payment ID (Razorpay): {paymentId}
