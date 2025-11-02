@@ -21,6 +21,7 @@ import RefundPolicyPage from "./pages/policy pages/Refund-policy";
 import Footer from "./components/custom/Footer";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminRoute from "./components/custom/auth/AdminRoute";
+import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import {
   BrowserRouter as Router,
   Routes,
@@ -61,6 +62,14 @@ const AppContent = () => {
         <Route
           path="/ordertrackingdetails/:orderId"
           element={<OrderTrackingDetails />}
+        />
+        <Route
+          path="/admin/orders/:orderId"
+          element={
+            <AdminRoute>
+              <AdminOrderDetailPage />
+            </AdminRoute>
+          }
         />
         <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />

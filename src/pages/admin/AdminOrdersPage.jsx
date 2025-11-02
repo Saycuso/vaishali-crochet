@@ -23,7 +23,7 @@ const AdminOrderCard = ({ order }) => {
   const handleCardClick = () => {
     // 🛠️ We can build an admin detail page later.
     // For now, let's just go to the customer-facing one.
-    navigate(`/ordertrackingdetails/${order.id}`);
+    navigate(`/admin/orders/${order.id}`);
   };
 
   return (
