@@ -38,7 +38,7 @@ const ProductStockCard = ({ product }) => {
 
   return (
     <Card className="bg-white hover:shadow-lg transition-shadow border border-gray-200 rounded-xl">
-      <CardContent className="flex justify-between items-center p-4 sm:p-6">
+      <CardContent className="flex flex-col justify-between items-center p-4 sm:p-6">
         <div className="flex items-center gap-4">
           <img
             src={imageUrl}
@@ -47,9 +47,6 @@ const ProductStockCard = ({ product }) => {
           />
           <div>
             <p className="font-semibold text-gray-800">{product.name}</p>
-            <p className="text-sm text-gray-500">
-              {product.description ? product.description.slice(0, 40) + "..." : ""}
-            </p>
           </div>
         </div>
 
