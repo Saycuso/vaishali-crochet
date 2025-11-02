@@ -29,14 +29,23 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
   const [isProcessingWishlist, setIsProcessingWishlist] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const calculateTotalStock = (product) => {
+    if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+      // It's a VARIABLE product. Sum the stock of all variants.
+      return product.variants.reduce((total, variant) => {
+        return total + (variant.stockQuantity || 0); // Add each variant's stock
+      }, 0);
+    }
+    // It's a SIMPLE product. Use the top-level stock.
+    return product.stockQuantity || 0;
+  };
+  
+  const totalStock = calculateTotalStock(product);
 
   const imageUrl =
     product?.images?.[0] ||
     product?.variants?.[0]?.images?.[0] ||
     "https://placehold.co/400x300?text=No+Image";
-
-  const stockQuantity =
-    typeof product?.stockQuantity === "number" ? product.stockQuantity : 0;
 
   const hasDiscount =
     product?.originalprice && product?.originalprice > product?.price;
@@ -148,7 +157,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
       onClick={() => navigate(`/shop/${product.id}`)}
     >
       {/* Discount Badge */}
-      {hasDiscount && stockQuantity > 0 && (
+      {hasDiscount && totalStock > 0 && (
         <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
           -{discountPercent}%
         </span>
@@ -180,7 +189,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
           alt={product.name}
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        {stockQuantity === 0 && (
+        {totalStock  === 0 && (
           <CardTitle className="absolute inset-0 bg-black/50 text-white font-bold flex items-center justify-center text-base">
             Out of Stock
           </CardTitle>

@@ -210,8 +210,8 @@ exports.updateProductStock = onCall(
       }
 
       const ADMIN_UIDS = [
-        "tCtCJFrbLSojovxpSmpCrpXw4du2",
-        "xhvNtNlEF2gWU5G3BVetiUbBTZH2", // 👈 Make sure mom's UID is here
+        "tCtCJFrbLSOjovxpSmpCrpXw4du2", // <-- Your actual UID goes here
+        "xhvNtNlEF2gWU5G3BVetiUbBTZH2", // <-- Your Mom's actual UID goes here
       ];
 
       if (!ADMIN_UIDS.includes(request.auth.uid)) {
