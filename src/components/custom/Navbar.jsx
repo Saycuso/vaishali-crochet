@@ -10,7 +10,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
 import {
@@ -22,20 +21,32 @@ import {
   LogOut,
   LogIn,
   Heart,
+  Shield, // 👈 1. IMPORTED ADMIN ICON
 } from "lucide-react";
+import ADMIN_UIDS from "@/config/adminConfig"; // 👈 2. IMPORTED ADMIN LIST
 
 const auth = getAuth(app);
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [wishlistCount] = useState(0); // ✅ start with 0, no random “3”
+  const [isAdmin, setIsAdmin] = useState(false); // 👈 3. NEW STATE FOR ADMIN
+  const [wishlistCount] = useState(0);
   const location = useLocation();
   const { toggleCart, cartItems, clearCart } = useCartStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsLoggedIn(!!user);
+      
+      // --- 🛠️ 4. CHECK IF USER IS ADMIN ---
+      if (user && ADMIN_UIDS.includes(user.uid)) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+      // ---------------------------------
+      
       console.log(`Auth state changed. Logged in: ${!!user}`);
     });
     return () => unsubscribe();
@@ -59,6 +70,17 @@ const Navbar = () => {
     { name: "Contact", path: "/contact", icon: Mail },
     { name: "Orders And Tracking", path: "/orderstrackingpage", icon: Package },
   ];
+  
+  // --- 🛠️ 5. CREATE THE FULL NAV LIST (with admin links) ---
+  const navItems = [
+    ...baseNavItems,
+    // Add admin links only if the user is an admin
+    ...(isAdmin ? [
+        { name: "Admin Orders", path: "/admin/orders", icon: Shield },
+        { name: "Admin Products", path: "/admin/products", icon: Shield },
+      ] : [])
+  ];
+  // -----------------------------------------------------
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -105,22 +127,27 @@ const Navbar = () => {
 
               {/* Navigation links */}
               <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-                {baseNavItems.map((item) => {
+                {/* --- 🛠️ 6. USE THE NEW 'navItems' LIST --- */}
+                {navItems.map((item) => { 
                   const isActive = location.pathname === item.path;
+                  const isAdminLink = item.name.startsWith("Admin");
                   return (
                     <Link
                       key={item.name}
                       to={item.path}
                       onClick={() => setIsOpen(false)}
+                      // 🛠️ 7. Style admin links differently
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition-all duration-200 ${
                         isActive
                           ? "bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 shadow-sm border border-orange-200"
-                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          : isAdminLink 
+                          ? "text-purple-700 hover:bg-purple-50 hover:text-purple-900" // Admin link style
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900" // Regular link style
                       }`}
                     >
                       <item.icon
                         className={`h-5 w-5 ${
-                          isActive ? "text-orange-600" : "text-gray-600"
+                          isActive ? "text-orange-600" : (isAdminLink ? "text-purple-600" : "text-gray-600")
                         }`}
                       />
                       {item.name}
@@ -163,14 +190,17 @@ const Navbar = () => {
         {/* ================= Desktop Navigation ================= */}
         <div className="max-md:hidden">
           <div className="flex gap-10 lg:gap-20">
-            {baseNavItems.map((item) => (
+            {/* --- 🛠️ 8. USE THE NEW 'navItems' LIST --- */}
+            {navItems.map((item) => ( 
               <Link
                 key={item.name}
                 to={item.path}
-                className={`text-gray-600 hover:text-gray-800 transition-colors duration-200 ${
+                className={`transition-colors duration-200 ${
                   location.pathname === item.path
                     ? "font-semibold text-gray-900"
-                    : ""
+                    : item.name.startsWith("Admin")
+                    ? "text-purple-700 hover:text-purple-900" // Admin style
+                    : "text-gray-600 hover:text-gray-800" // Regular style
                 }`}
               >
                 {item.name}
