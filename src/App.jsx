@@ -23,6 +23,8 @@ import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminRoute from "./components/custom/auth/AdminRoute";
 import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import ScrollToTop from "./components/custom/ScrollToTop";
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -40,6 +42,7 @@ const AppContent = () => {
 
   return (
     <>
+      <ScrollToTop />
       <CartSync />
       {showNavbar && <Navbar />}
       <CartSidebar />
