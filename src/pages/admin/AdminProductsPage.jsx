@@ -1,26 +1,32 @@
-// src/pages/AdminProductsPage.jsx
-
 import React, { useState, useEffect } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db, app } from "@/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card"; // CardContent is used
 import { Loader2, Package, CheckCircle, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+// --- 1. Initialize the new Cloud Function ---
 const functions = getFunctions(app, "us-central1");
 const updateProductStock = httpsCallable(functions, "updateProductStock");
 
-// --- Product Card ---
+// --- 2. Create a reusable Product Card component ---
 const ProductStockCard = ({ product }) => {
   const [stock, setStock] = useState(product.stockQuantity);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // This image logic is the fixed one that checks both paths
   let imageUrl = "https://via.placeholder.com/80";
-  if (product.images?.[0]) imageUrl = product.images[0];
-  else if (product.variants?.[0]?.images?.[0]) imageUrl = product.variants[0].images[0];
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    imageUrl = product.images[0];
+  } else if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+    const variantImages = product.variants[0].images;
+    if (variantImages && Array.isArray(variantImages) && variantImages.length > 0) {
+      imageUrl = variantImages[0];
+    }
+  }
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -30,7 +36,7 @@ const ProductStockCard = ({ product }) => {
       setMessage({ type: "success", text: "Saved!" });
     } catch (error) {
       console.error("Stock update error:", error);
-      setMessage({ type: "error", text: "Error!" });
+      setMessage({ type: "error", text: "Error!" }); // Simpler error message
     }
     setIsLoading(false);
     setTimeout(() => setMessage(null), 2000);
@@ -38,41 +44,50 @@ const ProductStockCard = ({ product }) => {
 
   return (
     <Card className="bg-white hover:shadow-lg transition-shadow border border-gray-200 rounded-xl">
-      <CardContent className="flex flex-col justify-between items-center p-4 sm:p-6">
-        <div className="flex items-center gap-4">
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-20 h-20 object-cover rounded-lg border border-gray-200"
-          />
-          <div>
-            <p className="font-semibold text-gray-800">{product.name}</p>
+      {/* --- 🛠️ NEW LAYOUT --- */}
+      <CardContent className="flex items-center p-4 gap-4">
+        
+        {/* COLUMN 1: IMAGE */}
+        <img
+          src={imageUrl}
+          alt={product.name}
+          className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+        />
+
+        {/* COLUMN 2: DETAILS (Name + Controls) */}
+        <div className="flex flex-col justify-between w-full gap-3">
+          
+          {/* 2a: Name */}
+          <p className="font-semibold text-gray-800 truncate">
+            {product.name}
+          </p>
+
+          {/* 2b: Controls (Input + Button + Status) */}
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              className="w-20 text-center border-gray-300"
+            />
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4"
+            >
+              {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Save"}
+            </Button>
+            {message && (
+              message.type === "success" ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              )
+            )}
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Input
-            type="number"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-            className="w-20 text-center border-gray-300"
-          />
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4"
-          >
-            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Save"}
-          </Button>
-          {message && (
-            message.type === "success" ? (
-              <CheckCircle className="h-5 w-5 text-green-500" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-red-500" />
-            )
-          )}
-        </div>
       </CardContent>
+      {/* --- 🛠️ END NEW LAYOUT --- */}
     </Card>
   );
 };
