@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db, app } from "@/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { Card, CardContent } from "@/components/ui/card"; // CardContent is used
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Package, CheckCircle, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ const ProductStockCard = ({ product }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // This image logic is the fixed one that checks both paths
+  // Image logic
   let imageUrl = "https://via.placeholder.com/80";
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
     imageUrl = product.images[0];
@@ -36,7 +36,7 @@ const ProductStockCard = ({ product }) => {
       setMessage({ type: "success", text: "Saved!" });
     } catch (error) {
       console.error("Stock update error:", error);
-      setMessage({ type: "error", text: "Error!" }); // Simpler error message
+      setMessage({ type: "error", text: "Error!" });
     }
     setIsLoading(false);
     setTimeout(() => setMessage(null), 2000);
@@ -44,7 +44,6 @@ const ProductStockCard = ({ product }) => {
 
   return (
     <Card className="bg-white hover:shadow-lg transition-shadow border border-gray-200 rounded-xl">
-      {/* --- 🛠️ NEW LAYOUT --- */}
       <CardContent className="flex items-center p-4 gap-4">
         
         {/* COLUMN 1: IMAGE */}
@@ -54,8 +53,8 @@ const ProductStockCard = ({ product }) => {
           className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0"
         />
 
-        {/* COLUMN 2: DETAILS (Name + Controls) */}
-        <div className="flex flex-col justify-between w-full gap-3">
+        {/* --- 🛠️ FIX: Changed w-full to flex-1 and added min-w-0 --- */}
+        <div className="flex flex-col justify-between flex-1 min-w-0 gap-3">
           
           {/* 2a: Name */}
           <p className="font-semibold text-gray-800 truncate">
@@ -87,7 +86,6 @@ const ProductStockCard = ({ product }) => {
           </div>
         </div>
       </CardContent>
-      {/* --- 🛠️ END NEW LAYOUT --- */}
     </Card>
   );
 };
