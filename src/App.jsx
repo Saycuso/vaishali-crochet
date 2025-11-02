@@ -19,6 +19,8 @@ import TermsAndConditionsPage from "./pages/policy pages/Terms-and-conditions";
 import PrivacyPolicyPage from "./pages/policy pages/Privacy-policy";
 import RefundPolicyPage from "./pages/policy pages/Refund-policy";
 import Footer from "./components/custom/Footer";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminRoute from "./components/custom/auth/AdminRoute";
 import {
   BrowserRouter as Router,
   Routes,
@@ -63,6 +65,15 @@ const AppContent = () => {
         <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/admin/orders" element={<AdminOrdersPage db={db} />} />
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrdersPage db={db} />
+            </AdminRoute>
+          }
+        />
       </Routes>
       <Footer />
     </>

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "@/firebase";
+import { db } from "@/firebase"; // 👈 No auth needed here
 import {
   Card,
   CardHeader,
@@ -21,7 +20,9 @@ import OrderDateDisplay from "@/components/ui/orderdatedisplay";
 import { Button } from "@/components/ui/button";
 import { STATUS_MAP } from "@/lib/statusConfig";
 
-const OrderTrackingDetails = () => {
+// --- This is the SAME status map ---
+
+const AdminOrderDetailPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -35,9 +36,11 @@ const OrderTrackingDetails = () => {
       return;
     }
 
-    const fetchOrder = async (userId) => {
+    // This fetch is simpler because AdminRoute already handled auth
+    const fetchOrder = async () => {
       try {
-        const orderDocPath = `users/${userId}/orders/${orderId}`;
+        // --- 🛠️ FIX: Fetches from the ROOT 'orders' collection ---
+        const orderDocPath = `orders/${orderId}`;
         const docRef = doc(db, orderDocPath);
         const docSnap = await getDoc(docRef);
 
@@ -47,25 +50,15 @@ const OrderTrackingDetails = () => {
           setError(`Order ${orderId} not found.`);
         }
       } catch (err) {
-        console.error("Order Detail Fetch Error:", err);
-        setError("Failed to load order details. Check console.");
+        console.error("Admin Order Detail Fetch Error:", err);
+        setError("Failed to load order details.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchOrder(user.uid);
-      } else {
-        setIsLoading(false);
-        navigate("/login", {
-          state: { from: `/orderstrackingpage/${orderId}` },
-        });
-      }
-    });
-    return () => unsubscribe();
-  }, [orderId, navigate]);
+    fetchOrder();
+  }, [orderId]); // Only depends on orderId
 
   const calculateTotal = (items) => {
     return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -91,10 +84,10 @@ const OrderTrackingDetails = () => {
           <CardContent>
             <p>{error || "Order not found."}</p>
             <Button
-              onClick={() => navigate("/orderstrackingpage")}
+              onClick={() => navigate("/admin/orders")} // 👈 FIX: Go back to admin
               className="mt-4 w-full"
             >
-              Go Back
+              Back to Admin Dashboard
             </Button>
           </CardContent>
         </Card>
@@ -104,18 +97,16 @@ const OrderTrackingDetails = () => {
 
   const orderStatus = STATUS_MAP[order.status] || STATUS_MAP.Processing;
   const totalAmount = order.totalAmount || calculateTotal(order.items || []);
-  
-  // --- 🛠️ FIX: Check if the order is in a "paid" state ---
   const isPaid = order.status === 'captured' || order.status === 'Shipped' || order.status === 'Delivered';
-  // ----------------------------------------------------
 
+  // --- UI is copied directly from your OrderTrackingDetails ---
   return (
     <div className="min-h-screen bg-gray-50 px-3 py-4">
       <div className="max-w-md mx-auto rounded-lg overflow-hidden shadow-md bg-white border border-gray-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white relative">
           <button
-            onClick={() => navigate("/orderstrackingpage")}
+            onClick={() => navigate("/admin/orders")} // 👈 FIX: Go back to admin
             className="absolute left-3 top-3 bg-white/20 hover:bg-white/30 rounded-full p-1.5"
           >
             <ChevronLeft className="h-4 w-4 text-white" />
@@ -137,12 +128,11 @@ const OrderTrackingDetails = () => {
         </div>
         
         {/* Payment Pending/Failed Message */}
-        {(!isPaid) && ( // Show this message if not in a paid state
+        {(!isPaid) && (
           <div className="p-4 border-b bg-yellow-50 border-yellow-200">
             <CardContent className="p-0">
               <p className="text-sm font-medium text-yellow-800 text-center">
-                This payment was not completed. To buy these items, please go back
-                and place a new order.
+                This payment was not completed.
               </p>
             </CardContent>
           </div>
@@ -150,11 +140,9 @@ const OrderTrackingDetails = () => {
 
         {/* Total Paid/Amount */}
         <div className="p-4 border-b">
-          {/* --- 🛠️ FIX: Conditional Text --- */}
           <h2 className="text-sm font-medium text-gray-600">
             {isPaid ? "Total Paid" : "Total Amount"}
           </h2>
-          {/* ------------------------------- */}
           <p className="text-2xl font-bold text-gray-900 mt-1">
             ₹{totalAmount.toFixed(2)}
           </p>
@@ -169,7 +157,7 @@ const OrderTrackingDetails = () => {
             {order.items.map((item, i) => (
               <li
                 key={i}
-                className="flex gap-3 border rounded-lg p-2 hover:shadow-sm transition"
+                className="flex gap-3 border rounded-lg p-2"
               >
                 <img
                   src={item.thumbnail || "https://via.placeholder.com/100"}
@@ -200,34 +188,20 @@ const OrderTrackingDetails = () => {
           </h3>
           <div className="space-y-3 text-sm text-gray-700 m-4">
             <div className="flex gap-2">
-              <p className="font-semibold text-gray-800 item-start flex">
-                Name:
-              </p>
-              <p className="flex items-start gap-2">
-                {order.customerInfo?.name || "N/A"}
-              </p>
+              <p className="font-semibold text-gray-800">Name:</p>
+              <p>{order.customerInfo?.name || "N/A"}</p>
             </div>
             <div className="flex gap-2">
-              <p className="font-semibold text-gray-800 item-start flex">
-                Phone:{" "}
-              </p>
-              <p className="flex items-start">
-                {order.customerInfo?.phone || "N/A"}
-              </p>
+              <p className="font-semibold text-gray-800">Phone:</p>
+              <p>{order.customerInfo?.phone || "N/A"}</p>
             </div>
             <div className="flex gap-2">
-              <p className="font-semibold text-gray-800 flex items-start">
-                Email:
-              </p>
-              <p className="break-all flex items-start">
-                {order.customerInfo?.email || "N/A"}
-              </p>
+              <p className="font-semibold text-gray-800">Email:</p>
+              <p className="break-all">{order.customerInfo?.email || "N/A"}</p>
             </div>
             <div className="flex">
-              <p className="font-semibold text-gray-800 flex items-start">
-                Address:
-              </p>
-              <p className="flex items-start">
+              <p className="font-semibold text-gray-800 mr-2">Address:</p>
+              <p>
                 {order.customerInfo?.address || "N/A"},{" "}
                 {order.customerInfo?.pincode || ""}
               </p>
@@ -235,7 +209,7 @@ const OrderTrackingDetails = () => {
           </div>
         </div>
 
-        {/* Payment ID (Only show if payment was successful) */}
+        {/* Payment ID */}
         {order.paymentId && isPaid && (
           <div className="p-4">
             <h3 className="text-sm font-semibold text-gray-800 mb-1">
@@ -251,4 +225,4 @@ const OrderTrackingDetails = () => {
   );
 };
 
-export default OrderTrackingDetails;
+export default AdminOrderDetailPage;
