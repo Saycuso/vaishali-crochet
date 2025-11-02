@@ -11,86 +11,160 @@ import { Button } from "@/components/ui/button";
 const functions = getFunctions(app, "us-central1");
 const updateProductStock = httpsCallable(functions, "updateProductStock");
 
-// --- 2. Create a reusable Product Card component ---
-const ProductStockCard = ({ product }) => {
-  const [stock, setStock] = useState(product.stockQuantity || 0);
+
+// --- 2. NEW Sub-Component: VariantStockEditor ---
+// This component handles the logic for a *single variant*
+const VariantStockEditor = ({ productId, variant, variantIndex }) => {
+  const [stock, setStock] = useState(variant.stockQuantity || 0);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
-
-  // Image logic
-  let imageUrl = "https://via.placeholder.com/80";
-  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    imageUrl = product.images[0];
-  } else if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
-    const variantImages = product.variants[0].images;
-    if (variantImages && Array.isArray(variantImages) && variantImages.length > 0) {
-      imageUrl = variantImages[0];
-    }
-  }
 
   const handleSave = async () => {
     setIsLoading(true);
     setMessage(null);
     try {
-      await updateProductStock({ productId: product.id, newStock: Number(stock) });
-      setMessage({ type: "success", text: "Saved!" });
+      // We now pass the variantIndex to the backend
+      await updateProductStock({ 
+        productId: productId, 
+        newStock: Number(stock),
+        variantIndex: variantIndex // 👈 Tell the backend WHICH variant to update
+      });
+      setMessage({ type: "success" });
     } catch (error) {
       console.error("Stock update error:", error);
-      setMessage({ type: "error", text: "Error!" });
+      setMessage({ type: "error" });
     }
     setIsLoading(false);
     setTimeout(() => setMessage(null), 2000);
   };
 
   return (
-    <Card className="bg-white hover:shadow-lg transition-shadow border border-gray-200 rounded-xl">
+    <div className="flex items-center justify-between pl-10 pr-4 py-3 bg-gray-50 rounded-lg">
+      <p className="font-medium text-gray-700">{variant.name}</p>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+          className="w-20 text-center border-gray-300"
+        />
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+          size="sm" // Smaller button for variants
+          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-3"
+        >
+          {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Save"}
+        </Button>
+        {message && (
+          message.type === "success" ? 
+          <CheckCircle className="h-5 w-5 text-green-500" /> :
+          <AlertCircle className="h-5 w-5 text-red-500" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// --- 3. Main Product Card (Now handles BOTH simple and variable) ---
+const ProductStockCard = ({ product }) => {
+  const [stock, setStock] = useState(product.stockQuantity || 0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  // Check if this is a variable product
+  const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
+
+  let imageUrl = "https://via.placeholder.com/80";
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    imageUrl = product.images[0];
+  } else if (hasVariants) {
+    const variantImages = product.variants[0].images;
+    if (variantImages && Array.isArray(variantImages) && variantImages.length > 0) {
+      imageUrl = variantImages[0];
+    }
+  }
+
+  // This handleSave is only for SIMPLE (non-variant) products
+  const handleSimpleSave = async () => {
+    setIsLoading(true);
+    setMessage(null);
+    try {
+      // We pass 'null' for variantIndex to update the top-level stock
+      await updateProductStock({ 
+        productId: product.id, 
+        newStock: Number(stock), 
+        variantIndex: null 
+      });
+      setMessage({ type: "success" });
+    } catch (error) {
+      console.error("Stock update error:", error);
+      setMessage({ type: "error" });
+    }
+    setIsLoading(false);
+    setTimeout(() => setMessage(null), 2000);
+  };
+
+  return (
+    <Card className="bg-white hover:shadow-lg transition-shadow border border-gray-200 rounded-xl overflow-hidden">
       <CardContent className="flex items-center p-4 gap-4">
-        
-        {/* COLUMN 1: IMAGE */}
         <img
           src={imageUrl}
           alt={product.name}
           className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0"
         />
-
-        {/* --- 🛠️ FIX: Changed w-full to flex-1 and added min-w-0 --- */}
         <div className="flex flex-col justify-between flex-1 min-w-0 gap-3">
-          
-          {/* 2a: Name */}
           <p className="font-semibold text-gray-800 truncate">
             {product.name}
           </p>
 
-          {/* 2b: Controls (Input + Button + Status) */}
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              className="w-20 text-center border-gray-300"
-            />
-            <Button
-              onClick={handleSave}
-              disabled={isLoading}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4"
-            >
-              {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Save"}
-            </Button>
-            {message && (
-              message.type === "success" ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
+          {/* --- 🛠️ CONDITIONAL RENDER --- */}
+          {/* If it's a SIMPLE product, show the main stock editor */}
+          {!hasVariants && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                className="w-20 text-center border-gray-300"
+              />
+              <Button
+                onClick={handleSimpleSave}
+                disabled={isLoading}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4"
+              >
+                {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Save"}
+              </Button>
+              {message && (
+                message.type === "success" ? 
+                <CheckCircle className="h-5 w-5 text-green-500" /> :
                 <AlertCircle className="h-5 w-5 text-red-500" />
-              )
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
+
+      {/* If it IS a variable product, show the list of variant editors */}
+      {hasVariants && (
+        <div className="flex flex-col gap-2 px-4 pb-4">
+          {product.variants.map((variant, index) => (
+            <VariantStockEditor
+              key={variant.id || index}
+              productId={product.id}
+              variant={variant}
+              variantIndex={index}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 };
 
-// --- Main Page ---
+
+// --- 4. Main Page ---
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

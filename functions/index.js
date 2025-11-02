@@ -210,27 +210,57 @@ exports.updateProductStock = onCall(
       }
 
       const ADMIN_UIDS = [
-        "tCtCJFrbLSOjovxpSmpCrpXw4du2", // <-- Your actual UID goes here
-        "xhvNtNlEF2gWU5G3BVetiUbBTZH2", // <-- Your Mom's actual UID goes here
+        "tCtCJFrbLSojovxpSmpCrpXw4du2",
+        "xhvNtNlEF2gWU5G3BVetiUbBTZH2", // 👈 Make sure mom's UID is here
       ];
 
       if (!ADMIN_UIDS.includes(request.auth.uid)) {
         throw new HttpsError("permission-denied", "You must be an admin to do this.");
       }
 
-      const {productId, newStock} = request.data;
+      // --- 🛠️ NEW LOGIC ---
+      const {productId, newStock, variantIndex} = request.data; // 👈 Get variantIndex
+
       if (!productId || newStock === undefined || newStock < 0) {
         throw new HttpsError("invalid-argument", "Invalid product ID or stock quantity.");
       }
 
+      const productRef = db.collection("Products").doc(productId);
+
       try {
-        const productRef = db.collection("Products").doc(productId);
-        await productRef.update({stockQuantity: Number(newStock)});
+        if (variantIndex === null || variantIndex === undefined) {
+        // This is a SIMPLE product. Update top-level stock.
+          await productRef.update({
+            stockQuantity: Number(newStock),
+          });
+        } else {
+        // This is a VARIABLE product. Update the stock *inside* the array.
+          const docSnap = await productRef.get();
+          if (!docSnap.exists) throw new Error("Product not found");
+
+          const productData = docSnap.data();
+          const variants = productData.variants; // Get the whole array
+
+          // Check if the index is valid
+          if (variants && variants[variantIndex]) {
+          // Update the stock at the specific index
+            variants[variantIndex].stockQuantity = Number(newStock);
+
+            // Write the entire modified 'variants' array back
+            await productRef.update({
+              variants: variants,
+            });
+          } else {
+            throw new Error("Variant index not found.");
+          }
+        }
+        // --- 🛠️ END NEW LOGIC ---
+
         logger.info(`Stock updated for ${productId} to ${newStock} by admin ${request.auth.uid}`);
-        return {status: "success", productId, newStock};
+        return {status: "success", productId: productId, newStock: newStock};
       } catch (error) {
         logger.error("Stock Update Failed:", error);
-        throw new HttpsError("internal", "Stock update failed in the database.");
+        throw new HttpsError("internal", "Stock update failed: " + error.message);
       }
     },
 );
