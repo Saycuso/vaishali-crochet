@@ -118,8 +118,7 @@ const PrivacyPolicyPage = () => {
       <p>
         For more information about our privacy practices, if you have questions,
         or if you would like to make a complaint, please contact us by e-mail
-        at: <strong>vaishaliscrochet@gmail.com</strong> or by mail at{" "}
-        <strong>[Your Registered Business Address or Home Address]</strong>.
+        at: <strong>vaishaliscrochet@gmail.com</strong>
       </p>
     </div>
   );
