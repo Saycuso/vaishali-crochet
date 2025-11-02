@@ -1,4 +1,3 @@
-// --- 🛠️ IMPORT V2 FUNCTIONS ---
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions/v2");
 const admin = require("firebase-admin");
@@ -13,21 +12,13 @@ const {FieldValue} = admin.firestore;
 
 setGlobalOptions({region: "us-central1"});
 
-// --- 🛠️ NEW: SHIPPING LOGIC ---
 function getShippingCost(pincode) {
-  if (!pincode || pincode.length < 3) {
-    return 100; // Default to higher rate if pincode is invalid
-  }
-  // Maharashtra pincodes start with 40, 41, 42, 43, 44
+  if (!pincode || pincode.length < 3) return 100;
   const firstTwoDigits = pincode.substring(0, 2);
-  if (["40", "41", "42", "43", "44"].includes(firstTwoDigits)) {
-    return 80; // Maharashtra rate
-  }
-  return 100; // Rest of India rate
+  if (["40", "41", "42", "43", "44"].includes(firstTwoDigits)) return 80;
+  return 100;
 }
-// --- 🛠️ END NEW LOGIC ---
 
-// Helper function to verify the signature
 function verifyRazorpaySignature(body, signature) {
   const secret = process.env.RAZORPAY_SECRET;
   if (!secret) return false;
@@ -38,16 +29,12 @@ function verifyRazorpaySignature(body, signature) {
   return expectedSignature === signature;
 }
 
-// -----------------------------------------------------------
-// 2. CREATE ORDER FUNCTION (SERVER-SIDE TOTAL)
-// -----------------------------------------------------------
 exports.createOrder = onCall(
     {secrets: ["RAZORPAY_ID", "RAZORPAY_SECRET"]},
     async (request) => {
       if (!request.auth) throw new HttpsError("unauthenticated", "Login required.");
 
       const {uid} = request.auth;
-      // 🛠️ Client now ONLY sends customerInfo and items
       const {customerInfo, items} = request.data;
       const currency = "INR";
 
@@ -55,7 +42,6 @@ exports.createOrder = onCall(
         throw new HttpsError("invalid-argument", "Missing cart data.");
       }
 
-      // --- 🛠️ SERVER-SIDE PRICE CALCULATION ---
       let subtotal = 0;
       const productPromises = items.map(async (item) => {
         const productRef = db.collection("Products").doc(item.productId);
@@ -63,17 +49,15 @@ exports.createOrder = onCall(
         if (!productDoc.exists) {
           throw new HttpsError("not-found", `Product ${item.productId} not found.`);
         }
-        // Use the price from the database, not the client
         const price = productDoc.data().price;
         subtotal += price * item.quantity;
       });
 
-      await Promise.all(productPromises); // Wait for all products to be fetched
+      await Promise.all(productPromises);
 
       const shipping = getShippingCost(customerInfo.pincode);
       const totalAmount = subtotal + shipping;
       const totalAmountInPaise = Math.round(totalAmount * 100);
-      // --- 🛠️ END CALCULATION ---
 
       const razorpay = new Razorpay({
         key_id: process.env.RAZORPAY_ID,
@@ -81,8 +65,8 @@ exports.createOrder = onCall(
       });
 
       const options = {
-        amount: totalAmountInPaise, // Use server-calculated total
-        currency: currency,
+        amount: totalAmountInPaise,
+        currency,
         receipt: `${uid}_${Date.now().toString().slice(-10)}`,
         payment_capture: 1,
         notes: {userId: uid, itemCount: items.length},
@@ -96,22 +80,23 @@ exports.createOrder = onCall(
           orderId: order.id,
           items,
           customerInfo,
-          totalAmount: totalAmount, // Store the server-calculated total
-          subtotal: subtotal, // Store the server-calculated subtotal
-          shipping: shipping, // Store the server-calculated shipping
+          totalAmount,
+          subtotal,
+          shipping,
           status: "created",
           createdAt: FieldValue.serverTimestamp(),
         };
 
         const userOrderRef = db.collection("users").doc(uid).collection("orders").doc(order.id);
         await userOrderRef.set(orderData);
+
         const adminOrderRef = db.collection("orders").doc(order.id);
         await adminOrderRef.set(orderData);
 
         return {
           orderId: order.id,
           currency: order.currency,
-          amount: order.amount, // This is totalAmountInPaise
+          amount: order.amount,
           key_id: process.env.RAZORPAY_ID,
         };
       } catch (error) {
@@ -125,9 +110,6 @@ exports.createOrder = onCall(
     },
 );
 
-// -----------------------------------------------------------
-// 3. VERIFY PAYMENT FUNCTION (Fixing "Products" bug)
-// -----------------------------------------------------------
 exports.verifyAndDeductStock = onCall(
     {secrets: ["RAZORPAY_SECRET", "BREVO_HOST", "BREVO_USER", "BREVO_PASS"]},
     async (request) => {
@@ -153,6 +135,7 @@ exports.verifyAndDeductStock = onCall(
 
           const orderData = orderDoc.data();
           if (orderData.status === "captured") return;
+
           customerEmail = orderData.customerInfo.email;
 
           for (const item of orderData.items) {
@@ -184,7 +167,6 @@ exports.verifyAndDeductStock = onCall(
           transaction.update(adminOrderRef, updateData);
         });
 
-        // --- 3. SEND CONFIRMATION EMAIL ---
         if (customerEmail) {
           if (!process.env.BREVO_HOST || !process.env.BREVO_USER || !process.env.BREVO_PASS) {
             logger.warn(`Brevo secrets not set for order: ${razorpay_order_id}. Skipping email.`);
@@ -216,6 +198,39 @@ exports.verifyAndDeductStock = onCall(
         else if (error && error.message) errorMessage = error.message;
         else if (error) errorMessage = error.toString();
         throw new HttpsError("internal", errorMessage);
+      }
+    },
+);
+
+exports.updateProductStock = onCall(
+    {secrets: []},
+    async (request) => {
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in.");
+      }
+
+      const ADMIN_UIDS = [
+        "tCtCJFrbLSojovxpSmpCrpXw4du2",
+        "YOUR_MOMS_UID_GOES_HERE",
+      ];
+
+      if (!ADMIN_UIDS.includes(request.auth.uid)) {
+        throw new HttpsError("permission-denied", "You must be an admin to do this.");
+      }
+
+      const {productId, newStock} = request.data;
+      if (!productId || newStock === undefined || newStock < 0) {
+        throw new HttpsError("invalid-argument", "Invalid product ID or stock quantity.");
+      }
+
+      try {
+        const productRef = db.collection("Products").doc(productId);
+        await productRef.update({stockQuantity: Number(newStock)});
+        logger.info(`Stock updated for ${productId} to ${newStock} by admin ${request.auth.uid}`);
+        return {status: "success", productId, newStock};
+      } catch (error) {
+        logger.error("Stock Update Failed:", error);
+        throw new HttpsError("internal", "Stock update failed in the database.");
       }
     },
 );

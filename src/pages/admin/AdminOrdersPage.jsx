@@ -159,8 +159,8 @@ const AdminOrdersPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-        <Package className="h-8 w-8" />
+      <h1 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+        <Package className="text-xl" />
         Admin: All Orders
       </h1>
 

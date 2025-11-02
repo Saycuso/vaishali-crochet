@@ -83,6 +83,14 @@ const AppContent = () => {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/products"
+          element={
+            <AdminRoute>
+              <AdminProductsPage />
+            </AdminRoute>
+          }
+        />
       </Routes>
       <Footer />
     </>
