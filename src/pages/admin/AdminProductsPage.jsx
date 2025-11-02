@@ -24,12 +24,12 @@ const ProductStockCard = ({ product }) => {
 
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
     // Path 1: Product has a top-level 'images' array
-    imageUrl = product.images[0]?.url;
+    imageUrl = product.images[0];
   } else if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
     // Path 2: Product has images inside the first variant
     const variantImages = product.variants[0].images;
     if (variantImages && Array.isArray(variantImages) && variantImages.length > 0) {
-      imageUrl = variantImages[0]?.url; 
+      imageUrl = variantImages[0];
     }
   }
 
@@ -57,7 +57,7 @@ const ProductStockCard = ({ product }) => {
           className="w-16 h-16 object-cover rounded-md border"
         />
         <div>
-          <p className="font-semibold">{product.name}</p>
+          <p className="font-wwsemibold">{product.name}</p>
           <p className="text-sm text-gray-500">ID: {product.id}</p>
         </div>
       </div>
