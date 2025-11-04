@@ -8,8 +8,7 @@ import { collection, getDocs } from "firebase/firestore";
 const Shop = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]); // State for sub-categories
-  // State to track the currently selected filter
-  const [selectedCategory, setSelectedCategory] = useState("all"); 
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +23,7 @@ const Shop = () => {
         }));
         setProducts(productslist);
 
-        // --- 2. FETCH SUB-CATEGORIES (Path remains the same) ---
+        // --- 2. FETCH SUB-CATEGORIES ---
         const categoriesCollection = collection(db, "sub-categories");
         const categorySnapshot = await getDocs(categoriesCollection);
         const categoryList = categorySnapshot.docs.map((doc) => ({
@@ -32,7 +31,6 @@ const Shop = () => {
           ...doc.data(),
         }));
         setCategories(categoryList);
-
       } catch (error) {
         console.error("Error fetching shop data:", error);
       } finally {
@@ -42,17 +40,27 @@ const Shop = () => {
     fetchShopData();
   }, []);
 
-  // --- FILTERING LOGIC ---
+  // --- 🛠️ UPDATED FILTERING LOGIC (This is the fix!) ---
   const filteredProducts = products.filter((product) => {
-    // If 'all' is selected, show all products
+    // 1. If 'all' is selected, show all products
     if (selectedCategory === "all") {
       return true;
     }
-    // Filter using the corrected field name with bracket notation
-    // NOTE: This assumes you have made your Firebase field name consistent to 'sub-categoryId'
-    return product["sub-categoryId"] === selectedCategory; 
+
+    // 2. Check the OLD 'sub-categoryId' field (for old products)
+    const hasOldCategory = product["sub-categoryId"] === selectedCategory;
+
+    // 3. Check the NEW 'subcategory_ids' ARRAY (for new products)
+    // We check `product.subcategory_ids` first to make sure the array exists
+    const hasNewCategory =
+      product.subcategory_ids &&
+      product.subcategory_ids.includes(selectedCategory);
+
+    // 4. If EITHER is true, show the product
+    return hasOldCategory || hasNewCategory;
   });
-  
+  // --- 🛠️ END OF FIX ---
+
   // --- HANDLER ---
   const handleFilterChange = (categoryId) => {
     setSelectedCategory(categoryId);
@@ -71,19 +79,18 @@ const Shop = () => {
       <h1 className="text-3xl md:text-5xl font-bold text-center mb-8">
         Shop Our Creations
       </h1>
-      
-      {/* --- REPLACED BUTTONS WITH DROPDOWN SELECT --- */}
+
+      {/* --- DROPDOWN SELECT --- */}
       <div className="flex justify-center mb-10">
         <select
           value={selectedCategory}
           onChange={(e) => handleFilterChange(e.target.value)}
-          // Tailwind classes for styling the dropdown
           className="border border-gray-300 rounded-md p-2 w-full max-w-xs text-lg text-gray-700 
                      focus:ring-orange-600 focus:border-orange-600 appearance-none bg-white shadow-sm"
         >
           {/* Default Option: Show All */}
           <option value="all">All Creations</option>
-          
+
           {/* Dynamic Category Options */}
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -92,10 +99,9 @@ const Shop = () => {
           ))}
         </select>
       </div>
-      
+
       {/* --- PRODUCT GRID (Using filteredProducts) --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        
         {filteredProducts.length === 0 && (
           <p className="col-span-full text-center text-lg text-gray-500">
             No products found in this category.
