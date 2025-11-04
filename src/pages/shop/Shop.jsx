@@ -43,18 +43,15 @@ const Shop = () => {
   // --- 🛠️ UPDATED FILTERING LOGIC (This is the fix!) ---
   const filteredProducts = products.filter((product) => {
     // 1. If 'all' is selected, show all products
-    if (selectedCategory === "all") {
-      return true;
-    }
+     if (selectedCategory === "all") return true;
 
-    // 2. Check the OLD 'sub-categoryId' field (for old products)
-    const hasOldCategory = product["sub-categoryId"] === selectedCategory;
+  const hasOldCategory = String(product["sub-categoryId"]) === String(selectedCategory);
 
-    // 3. Check the NEW 'subcategory_ids' ARRAY (for new products)
-    // We check `product.subcategory_ids` first to make sure the array exists
-    const hasNewCategory =
-      product.subcategory_ids &&
-      product.subcategory_ids.includes(selectedCategory);
+  const hasNewCategory =
+    Array.isArray(product.subcategory_ids) &&
+    product.subcategory_ids.some(
+      (id) => String(id) === String(selectedCategory)
+    );
 
     // 4. If EITHER is true, show the product
     return hasOldCategory || hasNewCategory;
