@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -32,6 +32,13 @@ const VisuallyHidden = (props) => (
 const ProductImageGallery = ({ images, productName }) => {
   const [activeImage, setActiveImage] = useState(images[0]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (images && images.length > 0) {
+      setActiveImage(images[0]);
+    }
+  }, [images]);
+
   if (!images || images.length === 0) {
     return (
       <img
