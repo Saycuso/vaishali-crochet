@@ -9,7 +9,7 @@ const VariantSelector = ({ variants, activeVariant, onSelect }) => {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 overflow-x-auto flex-nowrap no-scrollbar py-2">
       {variants.map((variant) => (
         <Button
           key={variant.id}
