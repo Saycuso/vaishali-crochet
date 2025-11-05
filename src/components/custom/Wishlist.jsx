@@ -126,7 +126,7 @@ if (wishlistItems.length === 0) {
 
 // --- MAIN WISHLIST GRID ---
 return (
-  <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 py-12 px-4 md:px-10">
+  <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 py-10 px-4 md:px-10">
     <div className="max-w-6xl mx-auto">
       {/* HEADER */}
       <div className="text-center mb-10">
