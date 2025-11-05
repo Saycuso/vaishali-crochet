@@ -3,47 +3,60 @@ import { Phone, Mail, MessageCircle } from "lucide-react";
 
 const Contact = () => {
   return (
-    <div className="min-h-[70vh] flex items-center justify-center bg-white px-4 py-10">
-      <div className="w-full max-w-md bg-white border border-gray-200 rounded-xl shadow-md p-6 text-center">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-3">
-          Get in Touch
+    <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-orange-50 to-amber-100 px-4 py-14">
+      <div className="w-full max-w-lg bg-white/90 backdrop-blur-sm border border-orange-100 rounded-2xl shadow-sm p-5 text-center">
+        {/* Title */}
+        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-3">
+          Get in <span className="text-orange-500">Touch</span>
         </h2>
-        <p className="text-gray-600 text-sm mb-6">
-          We'd love to hear from you! Whether you have a question about our handmade
-          crochet items, orders, or anything else — feel free to reach out.
+        <p className="text-gray-600 text-base mb-8">
+          We'd love to hear from you! Whether it’s about a custom crochet order,
+          collaboration, or any query — just reach out. We’ll get back to you soon!
         </p>
 
         {/* Contact Info */}
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-center gap-2 text-gray-700">
-            <Phone className="w-4 h-4 text-orange-500" />
-            <a href="tel:+917021645040" className="hover:text-orange-500 transition text-sm">
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center justify-center gap-3 text-gray-700">
+            <Phone className="w-5 h-5 text-orange-500" />
+            <a
+              href="tel:+917021645040"
+              className="hover:text-orange-500 transition font-medium text-base"
+            >
               +91 70216 45040
             </a>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-gray-700">
-            <Mail className="w-4 h-4 text-orange-500" />
+          <div className="flex items-center justify-center gap-3 text-gray-700">
+            <Mail className="w-5 h-5 text-orange-500" />
             <a
               href="mailto:vaishaliscrochet@gmail.com"
-              className="hover:text-orange-500 transition text-sm"
+              className="hover:text-orange-500 transition font-medium text-base"
             >
               vaishaliscrochet@gmail.com
             </a>
           </div>
         </div>
 
-        {/* Optional message placeholder */}
-        <div className="border-t border-gray-200 pt-5">
-          <p className="text-sm text-gray-500 mb-3">
-            Want to send us a message directly?
-          </p>
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-orange-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-3 text-orange-400 font-semibold">
+              OR
+            </span>
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <div>
           <a
             href="mailto:vaishaliscrochet@gmail.com"
-            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full text-base font-medium shadow-md hover:shadow-lg transition-all"
           >
-            <MessageCircle className="w-4 h-4" />
-            Send Message
+            <MessageCircle className="w-5 h-5" />
+            Send Us a Message
           </a>
         </div>
       </div>
