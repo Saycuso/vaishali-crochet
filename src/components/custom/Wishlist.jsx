@@ -67,71 +67,94 @@ const Wishlist = () => {
 
 
   // --- Render Logic --- (Loading, Error, Not Logged In, Empty states remain the same) ---
-   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-        <p className="ml-3 text-gray-600">Loading your wishlist...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-     return (
-      <div className="text-center min-h-[60vh] flex flex-col justify-center items-center">
-        <p className="text-red-600">{error}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">Try Again</Button>
-      </div>
-     );
-  }
-
-  if (!userId) {
-     return (
-      <div className="text-center min-h-[60vh] flex flex-col justify-center items-center px-4">
-        <HeartCrack className="h-12 w-12 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Please Log In</h2>
-        <p className="text-gray-500 mb-6">Log in to view your wishlist items.</p>
-        <Button onClick={() => navigate('/login', { state: { from: '/wishlist' } })}>
-          Log In
-        </Button>
-      </div>
-     );
-  }
-
-  if (wishlistItems.length === 0) {
-    return (
-      <div className="text-center min-h-[60vh] flex flex-col justify-center items-center px-4">
-        <HeartCrack className="h-12 w-12 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Your Wishlist is Empty</h2>
-        <p className="text-gray-500 mb-6">Looks like you haven't added any favorites yet!</p>
-        <Button onClick={() => navigate('/shop')}>
-          Start Shopping
-        </Button>
-      </div>
-    );
-  }
-
-
-  // --- Display Wishlist Items ---
+   // --- LOADING STATE ---
+if (isLoading) {
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800 border-b pb-4">
-        My Wishlist ({wishlistItems.length})
-      </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] bg-gradient-to-b from-amber-50 to-orange-100">
+      <Loader2 className="h-8 w-8 animate-spin text-orange-600 mb-3" />
+      <p className="text-gray-700 font-medium">Loading your wishlist...</p>
+    </div>
+  );
+}
+
+// --- ERROR STATE ---
+if (error) {
+  return (
+    <div className="text-center min-h-[70vh] flex flex-col justify-center items-center bg-gradient-to-b from-amber-50 to-orange-100 px-4">
+      <p className="text-red-600 font-medium mb-4">{error}</p>
+      <Button onClick={() => window.location.reload()} className="bg-orange-500 hover:bg-orange-600">
+        Try Again
+      </Button>
+    </div>
+  );
+}
+
+// --- NOT LOGGED IN STATE ---
+if (!userId) {
+  return (
+    <div className="text-center min-h-[70vh] flex flex-col justify-center items-center bg-gradient-to-b from-amber-50 to-orange-100 px-4">
+      <HeartCrack className="h-14 w-14 text-gray-400 mb-4" />
+      <h2 className="text-2xl font-semibold text-gray-800 mb-2">Please Log In</h2>
+      <p className="text-gray-600 mb-6 max-w-sm">
+        Log in to view your wishlist and keep track of your favorite creations.
+      </p>
+      <Button
+        onClick={() => navigate('/login', { state: { from: '/wishlist' } })}
+        className="bg-orange-500 hover:bg-orange-600 text-white"
+      >
+        Log In
+      </Button>
+    </div>
+  );
+}
+
+// --- EMPTY STATE ---
+if (wishlistItems.length === 0) {
+  return (
+    <div className="text-center min-h-[70vh] flex flex-col justify-center items-center bg-gradient-to-b from-amber-50 to-orange-100 px-4">
+      <HeartCrack className="h-14 w-14 text-gray-400 mb-4" />
+      <h2 className="text-2xl font-semibold text-gray-800 mb-2">Your Wishlist is Empty</h2>
+      <p className="text-gray-600 mb-6 max-w-sm">
+        Looks like you haven’t added any favorites yet. Browse our creations and save the ones you love!
+      </p>
+      <Button onClick={() => navigate('/shop')} className="bg-orange-500 hover:bg-orange-600 text-white">
+        Start Shopping
+      </Button>
+    </div>
+  );
+}
+
+// --- MAIN WISHLIST GRID ---
+return (
+  <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 py-12 px-4 md:px-10">
+    <div className="max-w-6xl mx-auto">
+      {/* HEADER */}
+      <div className="text-center mb-10">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800">
+          My <span className="text-orange-600">Wishlist</span>
+        </h1>
+        <div className="mt-3 w-24 mx-auto h-1 bg-orange-400 rounded-full"></div>
+        <p className="text-gray-600 mt-3 max-w-2xl mx-auto text-base">
+          A curated list of your favorite crochet pieces — made with love and creativity.
+        </p>
+      </div>
+
+      {/* GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {wishlistItems.map((product) => (
-          // Make the whole div clickable
-          <div key={product.id} onClick={() => handleProductClick(product.id)} className="cursor-pointer">
-              <ProductCard
-                product={product}
-                // Pass false to hide the heart button on this page
-                showWishlistButton={false}
-              />
+          <div
+            key={product.id}
+            onClick={() => handleProductClick(product.id)}
+            className="cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+          >
+            <ProductCard product={product} showWishlistButton={false} />
           </div>
         ))}
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default Wishlist;
