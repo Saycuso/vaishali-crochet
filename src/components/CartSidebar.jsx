@@ -100,7 +100,7 @@ const CartSidebar = () => {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 truncate">
                         {item?.productname
-                          ? item.productname(item.name) // if product has variants
+                          ? `${item.productname} — ${item.name}` // if product has variants
                           : item.name}
                       </p>
                       {item.size && (
