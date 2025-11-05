@@ -28,7 +28,7 @@ const OrderSummary = ({ cartItems, customerInfo }) => {
             {/* 🔹 Row 1: Item name + total price */}
             <div className="flex justify-between items-start">
               <p className="text-sm font-medium text-gray-900 leading-snug">
-                {item.name}
+                {`${item.productname} — ${item.name}`}
               </p>
               <p className="text-sm font-semibold text-gray-900">
                 ₹{(item.price * item.quantity).toFixed(2)}
