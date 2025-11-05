@@ -29,8 +29,8 @@ const OrderHistoryListCard = ({ order }) => {
   const totalItems = order.items?.length || 0;
   const totalAmount =
     order.totalAmount || (order.subtotal || 0) + (order.shipping || 0);
-
-  const firstItemThumbnail = order.items?.[0]?.thumbnail;
+  const firstItem = order.items[0];
+  const firstItemThumbnail = firstItem?.thumbnail ? firstItem?.thumbnail : firstItem.images[0];
   const firstItemName = order.items?.[0]?.name;
 
   const handleCardClick = () => {
