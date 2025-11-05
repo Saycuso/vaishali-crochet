@@ -91,7 +91,7 @@ const CartSidebar = () => {
                   >
                     <img
                       src={
-                        item.images?.[0]?.url ||
+                        item.images?.[0] ||
                         "https://placehold.co/80x80/cccccc/333333?text=Product"
                       }
                       alt={item.name}
