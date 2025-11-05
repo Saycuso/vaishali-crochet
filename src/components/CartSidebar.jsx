@@ -99,7 +99,7 @@ const CartSidebar = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 truncate">
-                        {item.name}
+                        { item?.productname}
                       </p>
                       {item.size && (
                         <p className="text-sm text-gray-500">Size: {item.size}</p>
