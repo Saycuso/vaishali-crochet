@@ -1,4 +1,4 @@
-// src/pages/shop/ProductInfo.jsx
+// src/components/ProductInfo.jsx
 // (Copy and replace your entire file)
 
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ const ProductInfo = ({ product, selectedVariant, productId }) => {
     ? product.variants.findIndex((v) => v.name === selectedVariant.name)
     : null;
   const cartId =
-    variantIndexForId !== null
+    variantIndexForId !== null && variantIndexForId !== undefined
       ? `${productId}_${variantIndexForId}`
       : productId;
 

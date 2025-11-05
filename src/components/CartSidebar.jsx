@@ -1,3 +1,6 @@
+// src/components/CartSidebar.jsx
+// (Copy and replace your entire file)
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartStore } from "@/hooks/useCartStore";
@@ -74,10 +77,13 @@ const CartSidebar = () => {
               </div>
             ) : (
               cartItems.map((item) => {
+                // Use the correct stock data from the item
                 const isMaxStock = item.quantity >= item.stockQuantity;
+                
+                // --- 🛠️ USE item.cartId as the key ---
                 return (
                   <div
-                    key={item.id}
+                    key={item.cartId} 
                     className="flex items-center gap-4 bg-white/80 p-3 rounded-2xl shadow-sm border border-orange-100 hover:shadow-md transition-all"
                   >
                     <img
@@ -89,13 +95,11 @@ const CartSidebar = () => {
                       className="w-20 h-20 object-cover rounded-xl flex-shrink-0"
                     />
 
-                    {/* --- 🛠️ THIS IS THE UPDATED BLOCK --- */}
                     <div className="flex-1 min-w-0">
-                      
-                      {/* Top section: Name and Size */}
                       <div>
                         <p className="font-semibold text-gray-800 truncate">
-                          {item?.productname
+                          {/* Use the productname and name fields from the cart item */}
+                          {item.productname && item.name !== item.productname
                             ? `${item.productname} (${item.name})`
                             : item.name}
                         </p>
@@ -106,19 +110,17 @@ const CartSidebar = () => {
                         )}
                       </div>
 
-                      {/* Bottom section: Price and Controls */}
                       <div className="flex items-end justify-between mt-2">
-                        {/* Price */}
                         <p className="font-bold text-green-600 text-base">
                           ₹{item.price}
                         </p>
 
-                        {/* Quantity Controls */}
                         <div className="flex items-center">
+                          {/* --- 🛠️ PASS item.cartId TO FUNCTIONS --- */}
                           <Button
                             variant="ghost"
                             className="w-6 h-6 p-0 text-gray-700 hover:bg-orange-100"
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeItem(item.cartId)} 
                           >
                             −
                           </Button>
@@ -129,25 +131,22 @@ const CartSidebar = () => {
                             variant="ghost"
                             className="w-6 h-6 p-0 text-gray-700 hover:bg-orange-100"
                             disabled={isMaxStock}
-                            onClick={() => addItem(item)}
+                            onClick={() => addItem(item)} // addItem still just needs the item object
                           >
                             +
                           </Button>
 
-                          {/* Delete */}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="w-6 h-6 p-0 ml-2 text-red-500 hover:bg-red-50"
-                            onClick={() => deleteItem(item.id)}
+                            onClick={() => deleteItem(item.cartId)}
                           >
                             🗑️
                           </Button>
                         </div>
                       </div>
                     </div>
-                    {/* --- 🛠️ END OF UPDATED BLOCK --- */}
-                    
                   </div>
                 );
               })
