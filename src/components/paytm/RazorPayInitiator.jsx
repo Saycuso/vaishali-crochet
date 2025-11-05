@@ -4,7 +4,7 @@ import { app, auth } from "@/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Loader2 } from "lucide-react";
 
-// --- Robust loadScript function (No changes) ---
+// --- Robust loadScript function ---
 const loadScript = (src) => {
   return new Promise((resolve) => {
     const existingScript = document.querySelector(`script[src="${src}"]`);
@@ -60,22 +60,21 @@ const RazorpayInitiator = ({
       }
       await auth.currentUser.getIdToken(true);
 
-      // --- 🛠️ STEP 1: PREPARE DATA (This is the fix!) ---
+      // --- 🛠️ STEP 1: PREPARE DATA ---
       const orderData = {
         customerInfo: customerInfo,
         items: cartItems.map((item) => ({
-          productId: item.productId, // 👈 The PARENT Product ID
+          productId: item.productId,
           quantity: item.quantity,
-          variantIndex: item.variantIndex, // 👈 The index (e.g., 0, 1, or null)
+          variantIndex: item.variantIndex,
         })),
       };
-      // --- 🛠️ END OF FIX ---
 
       // --- STEP 2: Call the 'createOrder' Cloud Function ---
       const result = await createOrderFunction(orderData);
       const { orderId, amount, currency, key_id } = result.data;
 
-      // --- STEP 3: CONFIGURE RAZORPAY POPUP (No changes) ---
+      // --- STEP 3: CONFIGURE RAZORPAY POPUP ---
       const options = {
         key: key_id,
         amount: amount,
@@ -99,13 +98,8 @@ const RazorpayInitiator = ({
             const verifyResult = await verifyPaymentFunction(verificationData);
 
             if (verifyResult.data.status === "success") {
-              console.log(
-                `Payment Verified! Order: ${verifyResult.data.orderId}`
-              );
-              onOrderSuccess(
-                verifyResult.data.orderId,
-                response.razorpay_payment_id
-              );
+              console.log(`Payment Verified! Order: ${verifyResult.data.orderId}`);
+              onOrderSuccess(verifyResult.data.orderId, response.razorpay_payment_id);
             } else {
               const verificationErrorMsg = "Payment successful, but verification failed.";
               console.error(verificationErrorMsg);
