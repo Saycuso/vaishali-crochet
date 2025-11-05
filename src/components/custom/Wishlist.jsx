@@ -135,7 +135,7 @@ return (
         </h1>
         <div className="mt-3 w-24 mx-auto h-1 bg-orange-400 rounded-full"></div>
         <p className="text-gray-600 mt-3 max-w-2xl mx-auto text-base">
-          A curated list of your favorite crochet pieces — made with love and creativity.
+          A curated list of your favorite crochet pieces made with love and creativity.
         </p>
       </div>
 
