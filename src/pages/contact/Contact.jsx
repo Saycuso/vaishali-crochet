@@ -3,7 +3,7 @@ import { Phone, Mail, MessageCircle } from "lucide-react";
 
 const Contact = () => {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-orange-200 to-orange-300 px-4 py-14">
+    <div className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-orange-100 to-orange-200 px-4 py-14">
       <div className="w-full max-w-lg bg-white/90 backdrop-blur-sm border border-orange-100 rounded-2xl shadow-sm p-5 text-center">
         {/* Title */}
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-3">
