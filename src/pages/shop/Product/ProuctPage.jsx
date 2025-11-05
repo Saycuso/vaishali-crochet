@@ -91,6 +91,7 @@ const ProductPage = () => {
           product={product}
           selectedVariant={selectedVariant}
           setSelectedVariant={setSelectedVariant}
+          productId={productId}
         />
       </div>
 

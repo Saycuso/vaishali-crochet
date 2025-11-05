@@ -1,65 +1,86 @@
+// src/pages/shop/ProductInfo.jsx
+// (Copy and replace your entire file)
+
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/hooks/useCartStore";
 import { useNavigate } from "react-router-dom";
 
-const ProductInfo = ({ product, selectedVariant }) => {
+// --- 🛠️ 1. RECEIVE 'productId' PROP ---
+const ProductInfo = ({ product, selectedVariant, productId }) => {
   const addItem = useCartStore((state) => state.addItem);
   const toggleCart = useCartStore((state) => state.toggleCart);
   const navigate = useNavigate();
-
-  // --- 🛠️ FIX: Get cartItems from the store ---
   const cartItems = useCartStore((state) => state.cartItems);
-  // ------------------------------------------
 
   if (!product || !selectedVariant) {
     return null;
   }
 
-  // --- 🛠️ FIX: Real-time stock checking logic ---
-  // 1. Get the true stock quantity from the *selected variant*
+  // --- 🛠️ 2. RE-WRITTEN HANDLER FUNCTIONS ---
+  const handleAction = (isBuyNow = false) => {
+    // 1. Check if it's a simple or variant product
+    const isVariant = product.variants && product.variants.length > 0;
+
+    // 2. Get the correct data object (the simple product or the selected variant)
+    const dataForCart = isVariant ? selectedVariant : product;
+
+    // 3. Find the variant's index number (or null if it's a simple product)
+    const variantIndex = isVariant
+      ? product.variants.findIndex((v) => v.name === selectedVariant.name) // Finds the index (0, 1, 2...)
+      : null;
+
+    // 4. Build the NEW itemData object that the store expects
+    const itemData = {
+      productId: productId, // The PARENT ID (from props)
+      variantIndex: variantIndex, // The index (or null)
+      name: dataForCart.name,
+      price: dataForCart.price,
+      images: dataForCart.images,
+      stockQuantity: dataForCart.stockQuantity,
+      // We also add the product name for display in the cart
+      productname: isVariant ? product.name : dataForCart.name,
+    };
+
+    // 5. Call addItem with the new, correct object
+    addItem(itemData, isBuyNow);
+
+    // 6. Redirect or open cart
+    if (isBuyNow) {
+      navigate("/checkout");
+    } else {
+      toggleCart(true);
+    }
+  };
+
+  // --- 🛠️ 3. UPDATED STOCK CHECKING LOGIC ---
   const stockQuantity = selectedVariant.stockQuantity || 0;
 
-  // 2. Find this specific item in the cart
-  const itemInCart = cartItems.find(item => item.id === selectedVariant.id);
+  // Create the unique cartId to find this item
+  const variantIndexForId = product.variants
+    ? product.variants.findIndex((v) => v.name === selectedVariant.name)
+    : null;
+  const cartId =
+    variantIndexForId !== null
+      ? `${productId}_${variantIndexForId}`
+      : productId;
+
+  const itemInCart = cartItems.find((item) => item.cartId === cartId);
   const quantityInCart = itemInCart ? itemInCart.quantity : 0;
 
-  // 3. Determine button states
-  const isOutOfStock = stockQuantity <= 0; // Product is sold out
-  const isCartAtMax = quantityInCart >= stockQuantity; // User already has all available stock in their cart
-  // ----------------------------------------------
+  const isOutOfStock = stockQuantity <= 0;
+  const isCartAtMax = quantityInCart >= stockQuantity;
+  // --- END OF STOCK LOGIC ---
 
-  const createItemToAdd = (isBuyNow = false) => {
-    return {
-      ...product,
-      ...selectedVariant,
-      id: selectedVariant.id || product.id,
-      isBuyNow: isBuyNow,
-      quantity: 1, 
-      // stockQuantity is already on selectedVariant
-    };
-  };
-
-  const handleAddToCart = () => {
-    const itemToAdd = createItemToAdd(false);
-    addItem(itemToAdd, false); // addItem logic in your store handles incrementing
-    toggleCart(true);
-  };
-
-  const handleBuyNow = () => {
-    const itemToAdd = createItemToAdd(true);
-    addItem(itemToAdd, true); // This will just set the buyNowItem
-    navigate("/checkout");
-  };
-  
   const currentPrice = selectedVariant.price;
-  const originalprice = product.originalprice;
+  const originalprice =
+    selectedVariant.originalprice || product.originalprice; // Use variant original price if it exists
 
   const discountPercentage =
     originalprice && currentPrice
       ? Math.round(-((originalprice - currentPrice) / originalprice) * 100)
       : null;
-      
-  // Determine button text based on stock
+
+  // Determine button text
   let addButtonText = "Add to Cart";
   let buyButtonText = "Buy Now";
   if (isOutOfStock) {
@@ -69,7 +90,6 @@ const ProductInfo = ({ product, selectedVariant }) => {
     addButtonText = "All in Cart";
     buyButtonText = "All in Cart";
   }
-  // ---------------------------------------
 
   return (
     <div className="flex-1 flex flex-col justify-between mt-2">
@@ -80,7 +100,7 @@ const ProductInfo = ({ product, selectedVariant }) => {
 
         {/* Price Section */}
         <div className="mt-3 flex items-baseline">
-          {product.originalprice && (
+          {originalprice && (
             <div className="flex-col flex items-baseline gap-2">
               <span className="text-2xl font-semibold text-red-600">
                 {discountPercentage}%
@@ -105,10 +125,8 @@ const ProductInfo = ({ product, selectedVariant }) => {
       {/* Action Buttons */}
       <div className="flex-col flex gap-4 mt-5">
         <Button
-          onClick={handleAddToCart}
-          // --- 🛠️ FIX: Update disabled logic ---
+          onClick={() => handleAction(false)} // 👈 Call the new handler
           disabled={isOutOfStock || isCartAtMax}
-          // ------------------------------------
           className="flex-1 p-2 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white"
           size="lg"
         >
@@ -116,10 +134,8 @@ const ProductInfo = ({ product, selectedVariant }) => {
         </Button>
         <Button
           variant="outline"
-          onClick={handleBuyNow}
-          // --- 🛠️ FIX: Update disabled logic ---
+          onClick={() => handleAction(true)} // 👈 Call the new handler
           disabled={isOutOfStock || isCartAtMax}
-          // ------------------------------------
           className="flex-1 p-2 rounded-2xl border-orange-600 text-orange-600 hover:bg-orange-100"
           size="lg"
         >
