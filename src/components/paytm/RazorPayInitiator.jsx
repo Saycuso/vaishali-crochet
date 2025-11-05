@@ -1,6 +1,3 @@
-// src/components/paytm/RazorPayInitiator.jsx
-// (Copy and replace your entire file)
-
 import React from "react";
 import { Button } from "../ui/button";
 import { app, auth } from "@/firebase";
@@ -50,9 +47,9 @@ const RazorpayInitiator = ({
       "https://checkout.razorpay.com/v1/checkout.js"
     );
     if (!scriptLoaded) {
-      onOrderError(
-        "Razorpay SDK failed to load. Check your ad blocker or network."
-      );
+      const errorMsg = "Razorpay SDK failed to load. Check your ad blocker or network.";
+      console.error(errorMsg);
+      onOrderError(errorMsg);
       setIsProcessing(false);
       return;
     }
@@ -64,7 +61,6 @@ const RazorpayInitiator = ({
       await auth.currentUser.getIdToken(true);
 
       // --- 🛠️ STEP 1: PREPARE DATA (This is the fix!) ---
-      // We now send the minimal, correct data the backend needs.
       const orderData = {
         customerInfo: customerInfo,
         items: cartItems.map((item) => ({
@@ -111,7 +107,9 @@ const RazorpayInitiator = ({
                 response.razorpay_payment_id
               );
             } else {
-              onOrderError("Payment successful, but verification failed.");
+              const verificationErrorMsg = "Payment successful, but verification failed.";
+              console.error(verificationErrorMsg);
+              onOrderError(verificationErrorMsg);
               setIsProcessing(false);
             }
           } catch (error) {
@@ -120,6 +118,7 @@ const RazorpayInitiator = ({
             if (error.details && error.details.message) {
               msg = error.details.message;
             }
+            console.error("Error during verification:", msg);
             onOrderError(`Verification Error: ${msg}`);
             setIsProcessing(false);
           }
@@ -150,6 +149,7 @@ const RazorpayInitiator = ({
       if (e.details && e.details.message) {
         msg = e.details.message;
       }
+      console.error("Error details during initiation:", msg);
       onOrderError(msg);
       setIsProcessing(false);
     }
