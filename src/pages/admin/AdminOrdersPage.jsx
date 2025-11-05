@@ -16,8 +16,8 @@ const AdminOrderCard = ({ order }) => {
   const totalItems = order.items?.length || 0;
   const totalAmount =
     order.totalAmount || (order.subtotal || 0) + (order.shipping || 0);
-
-  const firstItemThumbnail = order.items?.[0]?.thumbnail;
+  const firstItemThumbnail = firstItem.images?.[0] || firstItem?.thumbnail;
+  const firstItem = order.items[0];
   const firstItemName = order.items?.[0]?.name;
 
   const handleCardClick = () => {
@@ -55,8 +55,7 @@ const AdminOrderCard = ({ order }) => {
               className="h-14 w-14 object-cover rounded-md border-2 border-white shadow-md absolute top-0 left-0 z-10"
             />
             {totalItems > 1 && (
-              <div className="h-14 w-14 bg-gray-200 rounded-md border border-gray-300 absolute bottom-0 right-0 transform translate-x-1 translate-y-1">
-              </div>
+              <div className="h-14 w-14 bg-gray-200 rounded-md border border-gray-300 absolute bottom-0 right-0 transform translate-x-1 translate-y-1"></div>
             )}
           </div>
 
@@ -66,13 +65,14 @@ const AdminOrderCard = ({ order }) => {
               {/* --- 🛠️ NEW: Added Customer Name --- */}
               <div className="flex items-center gap-1 font-semibold text-gray-800">
                 <User className="h-4 w-4 text-orange-500" />
-                <span>
-                  {order.customerInfo?.name || "No Customer Name"}
-                </span>
+                <span>{order.customerInfo?.name || "No Customer Name"}</span>
               </div>
               {/* ---------------------------------- */}
               <div className="flex items-center gap-1">
-                <OrderDateDisplay className="text-orange-500" timestamp={order.createdAt} />
+                <OrderDateDisplay
+                  className="text-orange-500"
+                  timestamp={order.createdAt}
+                />
               </div>
               <div className="flex items-center gap-1">
                 <Package className="h-4 w-4 text-orange-500" />
@@ -99,13 +99,12 @@ const AdminOrderCard = ({ order }) => {
   );
 };
 
-
 // --- This is the main page component ---
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Note: We're NOT using useNavigate here because
   // the AdminRoute component will handle redirects.
 
@@ -148,13 +147,13 @@ const AdminOrdersPage = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
-       <div className="flex flex-col items-center justify-center min-h-[80vh]">
-         <p className="text-red-500">{error}</p>
-       </div>
-    )
+      <div className="flex flex-col items-center justify-center min-h-[80vh]">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
   }
 
   return (
@@ -165,11 +164,11 @@ const AdminOrdersPage = () => {
       </h1>
 
       {orders.length === 0 ? (
-         <Card>
-           <CardContent className="p-6">
-             <p className="text-center text-gray-500">No orders found yet.</p>
-           </CardContent>
-         </Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center text-gray-500">No orders found yet.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-6 max-w-3xl mx-auto">
           {orders.map((order) => {
