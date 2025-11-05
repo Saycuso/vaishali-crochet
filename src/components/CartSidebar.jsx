@@ -89,51 +89,65 @@ const CartSidebar = () => {
                       className="w-20 h-20 object-cover rounded-xl flex-shrink-0"
                     />
 
+                    {/* --- 🛠️ THIS IS THE UPDATED BLOCK --- */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800 truncate">
-                        {item?.productname
-                          ? `${item.productname} — ${item.name}`
-                          : item.name}
-                      </p>
-                      {item.size && (
-                        <p className="text-sm text-gray-500">Size: {item.size}</p>
-                      )}
-                      <p className="font-bold text-green-600 mt-1">
-                        ₹{item.price}
-                      </p>
+                      
+                      {/* Top section: Name and Size */}
+                      <div>
+                        <p className="font-semibold text-gray-800 truncate">
+                          {item?.productname
+                            ? `${item.productname} (${item.name})`
+                            : item.name}
+                        </p>
+                        {item.size && (
+                          <p className="text-sm text-gray-500">
+                            Size: {item.size}
+                          </p>
+                        )}
+                      </div>
 
-                      {/* Quantity Controls */}
-                      <div className="flex items-center mt-2">
-                        <Button
-                          variant="ghost"
-                          className="w-6 h-6 p-0 text-gray-700 hover:bg-orange-100"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          −
-                        </Button>
-                        <span className="w-8 text-center text-sm font-medium">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          className="w-6 h-6 p-0 text-gray-700 hover:bg-orange-100"
-                          disabled={isMaxStock}
-                          onClick={() => addItem(item)}
-                        >
-                          +
-                        </Button>
+                      {/* Bottom section: Price and Controls */}
+                      <div className="flex items-end justify-between mt-2">
+                        {/* Price */}
+                        <p className="font-bold text-green-600 text-base">
+                          ₹{item.price}
+                        </p>
 
-                        {/* Delete */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="w-6 h-6 p-0 ml-2 text-red-500 hover:bg-red-50"
-                          onClick={() => deleteItem(item.id)}
-                        >
-                          🗑️
-                        </Button>
+                        {/* Quantity Controls */}
+                        <div className="flex items-center">
+                          <Button
+                            variant="ghost"
+                            className="w-6 h-6 p-0 text-gray-700 hover:bg-orange-100"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            −
+                          </Button>
+                          <span className="w-8 text-center text-sm font-medium">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            className="w-6 h-6 p-0 text-gray-700 hover:bg-orange-100"
+                            disabled={isMaxStock}
+                            onClick={() => addItem(item)}
+                          >
+                            +
+                          </Button>
+
+                          {/* Delete */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-6 h-6 p-0 ml-2 text-red-500 hover:bg-red-50"
+                            onClick={() => deleteItem(item.id)}
+                          >
+                            🗑️
+                          </Button>
+                        </div>
                       </div>
                     </div>
+                    {/* --- 🛠️ END OF UPDATED BLOCK --- */}
+                    
                   </div>
                 );
               })
