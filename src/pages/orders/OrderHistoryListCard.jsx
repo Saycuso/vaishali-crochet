@@ -30,7 +30,7 @@ const OrderHistoryListCard = ({ order }) => {
   const totalAmount =
     order.totalAmount || (order.subtotal || 0) + (order.shipping || 0);
   const firstItem = order.items[0];
-  const firstItemThumbnail = firstItem?.thumbnail ? firstItem?.thumbnail : firstItem.images[0];
+  const firstItemThumbnail = firstItem.images?.[0] || firstItem?.thumbnail;
   const firstItemName = order.items?.[0]?.name;
 
   const handleCardClick = () => {
