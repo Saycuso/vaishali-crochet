@@ -3,6 +3,17 @@ import { create } from "zustand";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase";
 
+// --- 🛠️ NEW HELPER FUNCTION ---
+// Creates a unique ID for a cart item.
+// e.g., "product_abc" for a simple product
+// e.g., "product_abc_1" for variant index 1
+const getCartId = (productId, variantIndex) => {
+  if (variantIndex !== null && variantIndex !== undefined) {
+    return `${productId}_${variantIndex}`;
+  }
+  return productId;
+};
+
 export const useCartStore = create((set, get) => ({
   isCartOpen: false,
   cartItems: [],
@@ -10,29 +21,22 @@ export const useCartStore = create((set, get) => ({
 
   setBuyNowItem: (item) => set({ buyNowItem: item }),
 
-  // 1. Action to reset the cart (used on logout)
   resetCart: () => {
-    set({ cartItems: [], isCartOpen: false, buyNowItem: null }); // 🔥 Added clear for buyNowItem
+    set({ cartItems: [], isCartOpen: false, buyNowItem: null });
   },
 
-  // 2. Action to set the cart state from Firestore (used by the listener)
   setCart: (newCartItems) => {
-    // Ensure newCartItems is an array (Firestore may return undefined/null if doc is empty)
     set({ cartItems: Array.isArray(newCartItems) ? newCartItems : [] });
   },
 
-  // 3. Async Action to sync the current cart to Firestore (called after any local modification)
   syncCartToFirestore: async (itemsToSync) => {
     const userId = auth.currentUser?.uid;
     if (!userId) {
       console.warn("User not logged in. Cart not saved to Firestore.");
       return;
     }
-
     try {
       const cartRef = doc(db, "carts", userId);
-
-      // Write the cartItems array to the Firestore document
       await setDoc(cartRef, { items: itemsToSync }, { merge: true });
       console.log("Cart synced to Firestore successfully.");
     } catch (error) {
@@ -40,71 +44,97 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
-  // --- EXISTING ACTIONS (MODIFIED TO CALL SYNC) ---
-
   toggleCart: (open) => {
     set((state) => ({
       isCartOpen: typeof open === "boolean" ? open : !state.isCartOpen,
     }));
   },
 
-  addItem: (product, isBuyNow = false) => {
-    // 🔥 ADDED isBuyNow parameter
-    const { cartItems, syncCartToFirestore, setBuyNowItem } = get();
+  // --- 🛠️ UPDATED addItem FUNCTION ---
+  addItem: (itemData, isBuyNow = false) => {
+    // 'itemData' MUST be an object built by your component
+    // It MUST contain:
+    // - productId (string, the main product ID)
+    // - variantIndex (number or null)
+    // - name (string, the product or variant name)
+    // - price (number)
+    // - images (array)
+    // - stockQuantity (number)
 
-    // 🔥 HANDLE BUY NOW: If this is a buy now request, only set the buyNowItem and exit.
-    if (isBuyNow) {
-      setBuyNowItem({ ...product, quantity: 1 });
-      return; // Don't proceed to modify the main cartItems array
+    if (!itemData.productId || !itemData.name || itemData.price === undefined) {
+      console.error("addItem received incomplete item data", itemData);
+      return; // Don't add a broken item
     }
 
-    // STANDARD ADD TO CART LOGIC
+    const { cartItems, syncCartToFirestore, setBuyNowItem } = get();
+
+    // 2. Create a unique ID for this cart item
+    const cartId = getCartId(itemData.productId, itemData.variantIndex);
+
+    // 3. Handle Buy Now
+    if (isBuyNow) {
+      const buyNowItem = {
+        ...itemData,
+        cartId: cartId,
+        quantity: 1,
+      };
+      setBuyNowItem(buyNowItem);
+      return;
+    }
+
+    // 4. Standard Add to Cart Logic
     let updatedCartItems;
-    const existingItem = cartItems.find((item) => item.id === product.id);
+    const existingItem = cartItems.find((item) => item.cartId === cartId);
 
     if (existingItem) {
+      // Found it, just increase quantity
       updatedCartItems = cartItems.map((item) =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.cartId === cartId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
       );
     } else {
-      updatedCartItems = [...cartItems, { ...product, quantity: 1 }];
+      // Not found, add it as a new item
+      updatedCartItems = [
+        ...cartItems,
+        { ...itemData, cartId: cartId, quantity: 1 },
+      ];
     }
 
     set({ cartItems: updatedCartItems });
     syncCartToFirestore(updatedCartItems);
   },
 
-  removeItem: (productId) => {
+  // --- 🛠️ UPDATED removeItem FUNCTION ---
+  removeItem: (cartId) => {
     const { cartItems, syncCartToFirestore } = get();
     let updatedCartItems;
 
-    const existingItem = cartItems.find((item) => item.id === productId);
+    const existingItem = cartItems.find((item) => item.cartId === cartId);
 
-    if (existingItem.quantity > 1) {
+    if (existingItem && existingItem.quantity > 1) {
       updatedCartItems = cartItems.map((item) =>
-        item.id === productId ? { ...item, quantity: item.quantity - 1 } : item
+        item.cartId === cartId ? { ...item, quantity: item.quantity - 1 } : item
       );
     } else {
-      updatedCartItems = cartItems.filter((item) => item.id !== productId);
+      updatedCartItems = cartItems.filter((item) => item.cartId !== cartId);
     }
 
     set({ cartItems: updatedCartItems });
-    syncCartToFirestore(updatedCartItems); // 🔥 Call sync after state update
+    syncCartToFirestore(updatedCartItems);
   },
 
-  deleteItem: (productId) => {
+  // --- 🛠️ UPDATED deleteItem FUNCTION ---
+  deleteItem: (cartId) => {
     const { cartItems, syncCartToFirestore } = get();
-
-    const updatedCartItems = cartItems.filter((item) => item.id !== productId);
-
+    const updatedCartItems = cartItems.filter((item) => item.cartId !== cartId);
     set({ cartItems: updatedCartItems });
-    syncCartToFirestore(updatedCartItems); // 🔥 Call sync after state update
+    syncCartToFirestore(updatedCartItems);
   },
 
   clearCart: () => {
-    // This is typically called only on successful checkout or Buy Now success
     const { syncCartToFirestore } = get();
-    set({ cartItems: [], buyNowItem: null }); // 🔥 Clear both main cart and buyNowItem
+    set({ cartItems: [], buyNowItem: null });
     syncCartToFirestore([]);
   },
 }));

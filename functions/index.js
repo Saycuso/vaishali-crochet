@@ -12,6 +12,7 @@ const {FieldValue} = admin.firestore;
 
 setGlobalOptions({region: "us-central1"});
 
+// --- Helper Functions (No changes) ---
 function getShippingCost(pincode) {
   if (!pincode || pincode.length < 3) return 100;
   const firstTwoDigits = pincode.substring(0, 2);
@@ -29,6 +30,8 @@ function verifyRazorpaySignature(body, signature) {
   return expectedSignature === signature;
 }
 
+// --- 🛠️ 1. UPDATED createOrder ---
+// This function now understands 'variantIndex'
 exports.createOrder = onCall(
     {secrets: ["RAZORPAY_ID", "RAZORPAY_SECRET"]},
     async (request) => {
@@ -43,14 +46,57 @@ exports.createOrder = onCall(
       }
 
       let subtotal = 0;
+      // This array will hold the final, verified items for the order
+      const verifiedItems = [];
+
       const productPromises = items.map(async (item) => {
+        // Your frontend MUST send productId, quantity, and variantIndex
+        if (!item.productId || !item.quantity) {
+          logger.error("Malformed item in cart:", item);
+          throw new HttpsError("invalid-argument", "Malformed item in cart. Missing productId or quantity.");
+        }
+
         const productRef = db.collection("Products").doc(item.productId);
         const productDoc = await productRef.get();
         if (!productDoc.exists) {
           throw new HttpsError("not-found", `Product ${item.productId} not found.`);
         }
-        const price = productDoc.data().price;
+
+        const productData = productDoc.data();
+        let price;
+        let stock;
+        const itemData = {...item}; // Copy item data
+
+        // Check if this is a variable product or simple product
+        if (item.variantIndex !== null && item.variantIndex !== undefined) {
+          // --- It's a VARIABLE product ---
+          if (!productData.variants || !productData.variants[item.variantIndex]) {
+            throw new HttpsError("not-found", `Variant ${item.variantIndex} for product ${item.productId} not found.`);
+          }
+          const variant = productData.variants[item.variantIndex];
+          price = variant.price;
+          stock = variant.stockQuantity;
+          // Add variant details to the order item
+          itemData.name = productData.name; // Main product name
+          itemData.variantName = variant.name; // Variant name
+          itemData.images = variant.images; // Variant images
+        } else {
+          // --- It's a SIMPLE product ---
+          price = productData.price;
+          stock = productData.stockQuantity;
+          // Add product details to the order item
+          itemData.name = productData.name;
+          itemData.images = productData.images;
+        }
+
+        // Final checks
+        if (price === undefined) throw new HttpsError("internal", `Price for ${item.productId} is not set.`);
+        if (stock === undefined) throw new HttpsError("internal", `Stock for ${item.productId} is not set.`);
+        if (stock < item.quantity) throw new HttpsError("invalid-argument", `Not enough stock for ${productData.name}.`);
+
         subtotal += price * item.quantity;
+        itemData.price = price; // Store the *verified* price
+        verifiedItems.push(itemData);
       });
 
       await Promise.all(productPromises);
@@ -58,6 +104,12 @@ exports.createOrder = onCall(
       const shipping = getShippingCost(customerInfo.pincode);
       const totalAmount = subtotal + shipping;
       const totalAmountInPaise = Math.round(totalAmount * 100);
+
+      // Check for NaN or 0 amount, which Razorpay rejects
+      if (!totalAmountInPaise || totalAmountInPaise <= 0) {
+        logger.error("Invalid order amount:", totalAmountInPaise);
+        throw new HttpsError("internal", "Total amount is invalid. Check product prices.");
+      }
 
       const razorpay = new Razorpay({
         key_id: process.env.RAZORPAY_ID,
@@ -78,7 +130,7 @@ exports.createOrder = onCall(
         const orderData = {
           userId: uid,
           orderId: order.id,
-          items,
+          items: verifiedItems, // 👈 Use the new verified items array
           customerInfo,
           totalAmount,
           subtotal,
@@ -110,6 +162,8 @@ exports.createOrder = onCall(
     },
 );
 
+// --- 🛠️ 2. UPDATED verifyAndDeductStock ---
+// This function now understands 'variantIndex'
 exports.verifyAndDeductStock = onCall(
     {secrets: ["RAZORPAY_SECRET", "BREVO_HOST", "BREVO_USER", "BREVO_PASS"]},
     async (request) => {
@@ -141,20 +195,41 @@ exports.verifyAndDeductStock = onCall(
           for (const item of orderData.items) {
             const productRef = db.collection("Products").doc(item.productId);
             const productDoc = await transaction.get(productRef);
-
             if (!productDoc.exists) throw new Error(`Product not found: ${item.productId}`);
 
-            const currentStock = productDoc.data().stockQuantity;
+            const productData = productDoc.data();
             const quantityToDeduct = item.quantity;
+            const variantIndex = item.variantIndex; // 👈 Get variantIndex from the order item
 
-            if (currentStock < quantityToDeduct) {
-              transaction.update(userOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
-              transaction.update(adminOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
-              throw new Error(`Insufficient stock for product: ${item.productId}`);
+            if (variantIndex !== null && variantIndex !== undefined) {
+              // --- It's a VARIABLE product ---
+              const variants = productData.variants;
+              if (!variants || !variants[variantIndex]) {
+                throw new Error(`Variant ${variantIndex} not found for ${item.productId}`);
+              }
+
+              const currentStock = variants[variantIndex].stockQuantity;
+              if (currentStock < quantityToDeduct) {
+                transaction.update(userOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
+                transaction.update(adminOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
+                throw new Error(`Insufficient stock for product variant: ${item.variantName}`);
+              }
+
+              // Update stock *inside* the array
+              variants[variantIndex].stockQuantity = currentStock - quantityToDeduct;
+              transaction.update(productRef, {variants: variants}); // Write the whole array back
+            } else {
+              // --- It's a SIMPLE product ---
+              const currentStock = productData.stockQuantity;
+              if (currentStock < quantityToDeduct) {
+                transaction.update(userOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
+                transaction.update(adminOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
+                throw new Error(`Insufficient stock for product: ${item.name}`);
+              }
+
+              const newStock = currentStock - quantityToDeduct;
+              transaction.update(productRef, {stockQuantity: newStock}); // Update top-level stock
             }
-
-            const newStock = currentStock - quantityToDeduct;
-            transaction.update(productRef, {stockQuantity: newStock});
           }
 
           const updateData = {
@@ -167,6 +242,7 @@ exports.verifyAndDeductStock = onCall(
           transaction.update(adminOrderRef, updateData);
         });
 
+        // --- Email logic (no changes) ---
         if (customerEmail) {
           if (!process.env.BREVO_HOST || !process.env.BREVO_USER || !process.env.BREVO_PASS) {
             logger.warn(`Brevo secrets not set for order: ${razorpay_order_id}. Skipping email.`);
@@ -202,6 +278,7 @@ exports.verifyAndDeductStock = onCall(
     },
 );
 
+// --- 3. updateProductStock (No changes, your logic was already perfect) ---
 exports.updateProductStock = onCall(
     {secrets: []},
     async (request) => {
@@ -210,16 +287,15 @@ exports.updateProductStock = onCall(
       }
 
       const ADMIN_UIDS = [
-        "tCtCJFrbLSOjovxpSmpCrpXw4du2", // <-- Your actual UID goes here
-        "xhvNtNlEF2gWU5G3BVetiUbBTZH2", // <-- Your Mom's actual UID goes here
+        "tCtCJFrbLSOjovxpSmpCrpXw4du2",
+        "xhvNtNlEF2gWU5G3BVetiUbBTZH2",
       ];
 
       if (!ADMIN_UIDS.includes(request.auth.uid)) {
         throw new HttpsError("permission-denied", "You must be an admin to do this.");
       }
 
-      // --- 🛠️ NEW LOGIC ---
-      const {productId, newStock, variantIndex} = request.data; // 👈 Get variantIndex
+      const {productId, newStock, variantIndex} = request.data;
 
       if (!productId || newStock === undefined || newStock < 0) {
         throw new HttpsError("invalid-argument", "Invalid product ID or stock quantity.");
@@ -229,24 +305,18 @@ exports.updateProductStock = onCall(
 
       try {
         if (variantIndex === null || variantIndex === undefined) {
-        // This is a SIMPLE product. Update top-level stock.
           await productRef.update({
             stockQuantity: Number(newStock),
           });
         } else {
-        // This is a VARIABLE product. Update the stock *inside* the array.
           const docSnap = await productRef.get();
           if (!docSnap.exists) throw new Error("Product not found");
 
           const productData = docSnap.data();
-          const variants = productData.variants; // Get the whole array
+          const variants = productData.variants;
 
-          // Check if the index is valid
           if (variants && variants[variantIndex]) {
-          // Update the stock at the specific index
             variants[variantIndex].stockQuantity = Number(newStock);
-
-            // Write the entire modified 'variants' array back
             await productRef.update({
               variants: variants,
             });
@@ -254,7 +324,6 @@ exports.updateProductStock = onCall(
             throw new Error("Variant index not found.");
           }
         }
-        // --- 🛠️ END NEW LOGIC ---
 
         logger.info(`Stock updated for ${productId} to ${newStock} by admin ${request.auth.uid}`);
         return {status: "success", productId: productId, newStock: newStock};

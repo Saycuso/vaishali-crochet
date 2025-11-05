@@ -153,7 +153,14 @@ const ProductReviewSection = ({ productId }) => {
         <div className="flex items-center space-x-1.5 text-sm">
           <label className="font-medium text-gray-800">Name:</label>
           <span className="text-orange-600 font-semibold">
-            {reviewerName || "Please log in"}
+              {reviewerName || (
+                <span
+                  onClick={() => navigate("/login")}
+                  className="cursor-pointer hover:underline text-orange-600"
+                >
+                  Please log in
+                </span>
+              )}
           </span>
         </div>
 
