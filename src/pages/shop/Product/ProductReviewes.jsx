@@ -28,7 +28,6 @@ const ProductReviewSection = ({ productId }) => {
   const [visibleCount, setVisibleCount] = useState(10);
   const firstReviewRef = useRef(null);
 
-
   // Fetch reviews
   useEffect(() => {
     if (!productId) return;
@@ -45,7 +44,9 @@ const ProductReviewSection = ({ productId }) => {
         }));
 
         setReviews(
-          fetchedReviews.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds)
+          fetchedReviews.sort(
+            (a, b) => b.createdAt?.seconds - a.createdAt?.seconds
+          )
         );
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -143,159 +144,168 @@ const ProductReviewSection = ({ productId }) => {
   };
 
   return (
-  <div className="space-y-6">
-    <h2 className="text-xl md:text-2xl font-bold">Customer Reviews</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl md:text-2xl font-bold">Customer Reviews</h2>
 
-    {/* Write Review */}
-    <Card className="p-4 border border-gray-300 rounded-lg shadow-sm">
-      <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
-      <form onSubmit={handleSubmitReview} className="space-y-2.5">
-        <div className="flex items-center space-x-1.5 text-sm">
-          <label className="font-medium text-gray-800">Name:</label>
-          <span className="text-orange-600 font-semibold">
-            {reviewerName || "Please log in"}
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <label className="font-medium text-gray-800 text-sm">Rating:</label>
-          <div className="flex space-x-0.5">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span
-                key={star}
-                className={`text-lg cursor-pointer ${
-                  star <= rating ? "text-yellow-500" : "text-gray-300"
-                }`}
-                onClick={() => setRating(star)}
-              >
-                ★
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <Textarea
-          placeholder="Share your experience with this product..."
-          value={newReviewText}
-          onChange={(e) => setNewReviewText(e.target.value)}
-          rows={3}
-          className="text-sm"
-          required
-        />
-
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-orange-600 hover:bg-orange-700 text-sm px-3 py-1.5"
-        >
-          {isSubmitting ? "Submitting..." : "Submit Review"}
-        </Button>
-      </form>
-    </Card>
-
-    {/* Reviews */}
-    <div className="space-y-3 pt-2 border-t border-gray-200">
-      {reviews.length === 0 && (
-        <p className="text-gray-500 text-sm">
-          No reviews yet. Be the first!
-        </p>
-      )}
-
-      {reviews.slice(0, visibleCount).map((review, index) => {
-        const isExpanded = expandedReviewIds.includes(review.id);
-        const comment = review.comment || "";
-        const showToggle = comment.length > 180;
-
- return (
-      <Card
-        key={review.id}
-        ref={index === 0 ? firstReviewRef : null} // 👈 reference the first visible review
-        className="rounded-md shadow-sm border border-gray-200"
-      >
-        <CardContent className="p-3 text-left">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-semibold text-gray-900 text-sm">
-                {review.reviewerName || "Anonymous"}
-              </p>
-              <p className="text-yellow-500 text-xs">
-                {"★".repeat(review.rating) + "☆".repeat(5 - review.rating)}
-              </p>
-            </div>
-            <span className="text-xs text-gray-500">
-              {getTimeAgo(review.createdAt)}
+      {/* Write Review */}
+      <Card className="p-4 border border-gray-300 rounded-lg shadow-sm">
+        <h3 className="text-lg font-semibold mb-2">Write a Review</h3>
+        <form onSubmit={handleSubmitReview} className="space-y-2.5">
+          <div className="flex items-center space-x-1.5 text-sm">
+            <label className="font-medium text-gray-800">Name:</label>
+            <span className="text-orange-600 font-semibold">
+              {reviewerName || (
+                <span
+                  onClick={() => navigate("/login")}
+                  className="cursor-pointer hover:underline text-orange-600"
+                >
+                  Please log in
+                </span>
+              )}
             </span>
           </div>
 
-          <p className="text-gray-700 text-sm mt-1.5 leading-snug">
-            {isExpanded || !showToggle
-              ? comment
-              : comment.slice(0, 180) + "..."}
-            {showToggle && (
-              <span
-                onClick={() => toggleExpand(review.id)}
-                className="text-orange-600 ml-1 cursor-pointer select-none font-medium"
-              >
-                {isExpanded ? "Read less" : "Read more"}
-              </span>
-            )}
-          </p>
-        </CardContent>
+          <div className="flex items-center space-x-3">
+            <label className="font-medium text-gray-800 text-sm">Rating:</label>
+            <div className="flex space-x-0.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  className={`text-lg cursor-pointer ${
+                    star <= rating ? "text-yellow-500" : "text-gray-300"
+                  }`}
+                  onClick={() => setRating(star)}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <Textarea
+            placeholder="Share your experience with this product..."
+            value={newReviewText}
+            onChange={(e) => setNewReviewText(e.target.value)}
+            rows={3}
+            className="text-sm"
+            required
+          />
+
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-orange-600 hover:bg-orange-700 text-sm px-3 py-1.5"
+          >
+            {isSubmitting ? "Submitting..." : "Submit Review"}
+          </Button>
+        </form>
       </Card>
-    );
-  })}
 
-  {/* --- View More / Less --- */}
-  {reviews.length > 10 && (
-    <div className="text-center mt-3">
-      {visibleCount < reviews.length ? (
-        <button
-          onClick={() => setVisibleCount((prev) => prev + 10)}
-          className="text-orange-600 font-medium hover:underline text-sm"
-        >
-          View more {Math.min(10, reviews.length - visibleCount)} reviews
-        </button>
-      ) : (
-        <button
-          onClick={() => {
-            setVisibleCount(10);
-            // 👇 scroll to the first review instead of top
-            setTimeout(() => {
-  const el = firstReviewRef.current;
-  if (!el) return;
+      {/* Reviews */}
+      <div className="space-y-3 pt-2 border-t border-gray-200">
+        {reviews.length === 0 && (
+          <p className="text-gray-500 text-sm">No reviews yet. Be the first!</p>
+        )}
 
-  const elementTop = el.getBoundingClientRect().top + window.scrollY - 80; // offset: 80px above
-  const start = window.scrollY;
-  const distance = elementTop - start;
-  const duration = 600; // milliseconds
-  let startTime = null;
+        {reviews.slice(0, visibleCount).map((review, index) => {
+          const isExpanded = expandedReviewIds.includes(review.id);
+          const comment = review.comment || "";
+          const showToggle = comment.length > 180;
 
-  const easeInOutQuad = (t) =>
-    t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+          return (
+            <Card
+              key={review.id}
+              ref={index === 0 ? firstReviewRef : null} // 👈 reference the first visible review
+              className="rounded-md shadow-sm border border-gray-200"
+            >
+              <CardContent className="p-3 text-left">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {review.reviewerName || "Anonymous"}
+                    </p>
+                    <p className="text-yellow-500 text-xs">
+                      {"★".repeat(review.rating) +
+                        "☆".repeat(5 - review.rating)}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {getTimeAgo(review.createdAt)}
+                  </span>
+                </div>
 
-  const animateScroll = (timestamp) => {
-    if (!startTime) startTime = timestamp;
-    const progress = Math.min((timestamp - startTime) / duration, 1);
-    const eased = easeInOutQuad(progress);
-    window.scrollTo(0, start + distance * eased);
+                <p className="text-gray-700 text-sm mt-1.5 leading-snug">
+                  {isExpanded || !showToggle
+                    ? comment
+                    : comment.slice(0, 180) + "..."}
+                  {showToggle && (
+                    <span
+                      onClick={() => toggleExpand(review.id)}
+                      className="text-orange-600 ml-1 cursor-pointer select-none font-medium"
+                    >
+                      {isExpanded ? "Read less" : "Read more"}
+                    </span>
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
 
-    if (progress < 1) requestAnimationFrame(animateScroll);
-  };
+        {/* --- View More / Less --- */}
+        {reviews.length > 10 && (
+          <div className="text-center mt-3">
+            {visibleCount < reviews.length ? (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 10)}
+                className="text-orange-600 font-medium hover:underline text-sm"
+              >
+                View more {Math.min(10, reviews.length - visibleCount)} reviews
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setVisibleCount(10);
+                  // 👇 scroll to the first review instead of top
+                  setTimeout(() => {
+                    const el = firstReviewRef.current;
+                    if (!el) return;
 
-  requestAnimationFrame(animateScroll);
-}, 150);
-          }}
-          className="text-orange-600 font-medium hover:underline text-sm"
-        >
-          View less reviews
-        </button>
-      )}
+                    const elementTop =
+                      el.getBoundingClientRect().top + window.scrollY - 80; // offset: 80px above
+                    const start = window.scrollY;
+                    const distance = elementTop - start;
+                    const duration = 600; // milliseconds
+                    let startTime = null;
+
+                    const easeInOutQuad = (t) =>
+                      t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+                    const animateScroll = (timestamp) => {
+                      if (!startTime) startTime = timestamp;
+                      const progress = Math.min(
+                        (timestamp - startTime) / duration,
+                        1
+                      );
+                      const eased = easeInOutQuad(progress);
+                      window.scrollTo(0, start + distance * eased);
+
+                      if (progress < 1) requestAnimationFrame(animateScroll);
+                    };
+
+                    requestAnimationFrame(animateScroll);
+                  }, 150);
+                }}
+                className="text-orange-600 font-medium hover:underline text-sm"
+              >
+                View less reviews
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
-  )}
-    </div>
-  </div>
-);
-
+  );
 };
 
 export default ProductReviewSection;
