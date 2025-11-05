@@ -1,39 +1,32 @@
+// src/components/paytm/RazorPayInitiator.jsx
+// (Copy and replace your entire file)
+
 import React from "react";
 import { Button } from "../ui/button";
 import { app, auth } from "@/firebase";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Loader2 } from "lucide-react";
 
-// --- 🛠️ UPDATED: Robust loadScript function ---
+// --- Robust loadScript function (No changes) ---
 const loadScript = (src) => {
   return new Promise((resolve) => {
-    // Check if the script is already on the page
     const existingScript = document.querySelector(`script[src="${src}"]`);
-    
     if (existingScript) {
-      // If it exists, assume it's loaded or loading
-      // We can add a check for its loaded state if needed, but for now this is fine
       resolve(true);
       return;
     }
-
-    // If not, create and append it
     const script = document.createElement("script");
     script.src = src;
-    
     script.onload = () => {
       resolve(true);
     };
-    
     script.onerror = () => {
       console.error("Failed to load Razorpay SDK");
       resolve(false);
     };
-    
     document.body.appendChild(script);
   });
 };
-// --- 🛠️ END OF UPDATE ---
 
 // --- 1. INITIALIZE FIREBASE FUNCTIONS ---
 const functions = getFunctions(app, "us-central1");
@@ -57,7 +50,9 @@ const RazorpayInitiator = ({
       "https://checkout.razorpay.com/v1/checkout.js"
     );
     if (!scriptLoaded) {
-      onOrderError("Razorpay SDK failed to load. Check your ad blocker or network.");
+      onOrderError(
+        "Razorpay SDK failed to load. Check your ad blocker or network."
+      );
       setIsProcessing(false);
       return;
     }
@@ -68,23 +63,23 @@ const RazorpayInitiator = ({
       }
       await auth.currentUser.getIdToken(true);
 
-      // --- STEP 1: PREPARE DATA (Prices removed) ---
+      // --- 🛠️ STEP 1: PREPARE DATA (This is the fix!) ---
+      // We now send the minimal, correct data the backend needs.
       const orderData = {
         customerInfo: customerInfo,
         items: cartItems.map((item) => ({
-          productId: item.id,
-          name: item.name,
-          price: item.price,
+          productId: item.productId, // 👈 The PARENT Product ID
           quantity: item.quantity,
-          thumbnail: item.images[0] || item?.variants[0]?.images[0],
+          variantIndex: item.variantIndex, // 👈 The index (e.g., 0, 1, or null)
         })),
       };
+      // --- 🛠️ END OF FIX ---
 
       // --- STEP 2: Call the 'createOrder' Cloud Function ---
       const result = await createOrderFunction(orderData);
       const { orderId, amount, currency, key_id } = result.data;
 
-      // --- STEP 3: CONFIGURE RAZORPAY POPUP ---
+      // --- STEP 3: CONFIGURE RAZORPAY POPUP (No changes) ---
       const options = {
         key: key_id,
         amount: amount,
@@ -93,7 +88,7 @@ const RazorpayInitiator = ({
         description: `Order ID: ${orderId}`,
         order_id: orderId,
         handler: async function (response) {
-          setIsProcessing(true); 
+          setIsProcessing(true);
 
           const verificationData = {
             razorpay_order_id: response.razorpay_order_id,
@@ -103,7 +98,7 @@ const RazorpayInitiator = ({
 
           try {
             if (auth.currentUser) {
-                await auth.currentUser.getIdToken(true);
+              await auth.currentUser.getIdToken(true);
             }
             const verifyResult = await verifyPaymentFunction(verificationData);
 
@@ -117,7 +112,7 @@ const RazorpayInitiator = ({
               );
             } else {
               onOrderError("Payment successful, but verification failed.");
-              setIsProcessing(false); 
+              setIsProcessing(false);
             }
           } catch (error) {
             console.error("Verification Function Failed:", error);
@@ -149,14 +144,13 @@ const RazorpayInitiator = ({
       // 5. Open the Razorpay Checkout Modal
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
-
     } catch (e) {
       console.error("Error during payment initiation:", e);
       let msg = e.message || "Failed to initiate payment.";
       if (e.details && e.details.message) {
         msg = e.details.message;
       }
-      onOrderError(msg); 
+      onOrderError(msg);
       setIsProcessing(false);
     }
   };
