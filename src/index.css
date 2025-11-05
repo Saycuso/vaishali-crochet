@@ -188,10 +188,6 @@
   animation-play-state: paused;
 }
 
-/* In your src/index.css file */
-
-
-
 
 @layer utilities {
   /* Hide scrollbar for Chrome, Safari and Opera */
