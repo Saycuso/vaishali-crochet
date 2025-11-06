@@ -93,7 +93,7 @@ const Shop = () => {
       </div>
 
       {/* 🧺 Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div className="grid md:grid-cols-3 sm:grid-cols-2  lg:grid-cols-4 gap-8">
         {filteredProducts.length === 0 && (
           <p className="col-span-full text-center text-lg text-gray-600 italic">
             No products found in this category.
