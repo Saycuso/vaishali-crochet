@@ -344,7 +344,6 @@ exports.updateOrderStatus = onCall(
       if (!orderId || !newStatus) {
         throw new HttpsError("invalid-argument", "Missing orderId or newStatus.");
       }
-
       try {
         // 3. Get the Admin order to find the customer's UID
         const adminOrderRef = db.collection("orders").doc(orderId);
@@ -352,25 +351,20 @@ exports.updateOrderStatus = onCall(
         if (!adminOrderDoc.exists) {
           throw new HttpsError("not-found", "Order not found in admin collection.");
         }
-
         const userId = adminOrderDoc.data().userId;
         if (!userId) {
           throw new HttpsError("internal", "Order is missing a userId.");
         }
-
         // 4. Get the User's order reference
         const userOrderRef = db.collection("users").doc(userId).collection("orders").doc(orderId);
-
         const statusUpdate = {
           status: newStatus,
         };
-
         // 5. Update BOTH documents in parallel
         await Promise.all([
           adminOrderRef.update(statusUpdate),
           userOrderRef.update(statusUpdate),
         ]);
-
         logger.info(`Order ${orderId} status updated to ${newStatus} by admin ${request.auth.uid}`);
         return {status: "success", orderId: orderId, newStatus: newStatus};
       } catch (error) {
