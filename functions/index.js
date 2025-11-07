@@ -15,7 +15,7 @@ setGlobalOptions({region: "us-central1"});
 
 const ADMIN_UIDS = [
   "tCtCJFrbLSOjovxpSmpCrpXw4du2",
-  "xhvNtNlEF2gWU5G3BVetiUbBTZH2",
+  "dMH1JKeZw9Yh9xTuwheWmc8Vhux2",
 ];
 
 // --- Helper Functions (No changes) ---
