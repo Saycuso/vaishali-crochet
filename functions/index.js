@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions/v2");
 const admin = require("firebase-admin");
@@ -11,6 +12,11 @@ const db = admin.firestore();
 const {FieldValue} = admin.firestore;
 
 setGlobalOptions({region: "us-central1"});
+
+const ADMIN_UIDS = [
+  "tCtCJFrbLSOjovxpSmpCrpXw4du2",
+  "xhvNtNlEF2gWU5G3BVetiUbBTZH2",
+];
 
 // --- Helper Functions (No changes) ---
 function getShippingCost(pincode) {
@@ -111,11 +117,6 @@ exports.createOrder = onCall(
         throw new HttpsError("internal", "Total amount is invalid. Check product prices.");
       }
 
-      const razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_ID,
-        key_secret: process.env.RAZORPAY_SECRET,
-      });
-
       const options = {
         amount: totalAmountInPaise,
         currency,
@@ -125,6 +126,11 @@ exports.createOrder = onCall(
       };
 
       try {
+        const razorpay = new Razorpay({
+          key_id: process.env.RAZORPAY_ID,
+          key_secret: process.env.RAZORPAY_SECRET,
+        });
+
         const order = await razorpay.orders.create(options);
 
         const orderData = {
@@ -253,7 +259,6 @@ exports.verifyAndDeductStock = onCall(
               secure: false,
               auth: {user: process.env.BREVO_USER, pass: process.env.BREVO_PASS},
             });
-
             const mailOptions = {
               from: "\"Vaishali's Crochet Store\" <reactretro510@gmail.com>",
               to: customerEmail,
@@ -265,7 +270,6 @@ exports.verifyAndDeductStock = onCall(
             logger.info(`Email sent for Order: ${razorpay_order_id}`);
           }
         }
-
         return {status: "success", orderId: razorpay_order_id};
       } catch (error) {
         logger.error("Stock Deduction or Email Failed:", error);
@@ -285,24 +289,14 @@ exports.updateProductStock = onCall(
       if (!request.auth) {
         throw new HttpsError("unauthenticated", "You must be logged in.");
       }
-
-      const ADMIN_UIDS = [
-        "tCtCJFrbLSOjovxpSmpCrpXw4du2",
-        "xhvNtNlEF2gWU5G3BVetiUbBTZH2",
-      ];
-
       if (!ADMIN_UIDS.includes(request.auth.uid)) {
         throw new HttpsError("permission-denied", "You must be an admin to do this.");
       }
-
       const {productId, newStock, variantIndex} = request.data;
-
       if (!productId || newStock === undefined || newStock < 0) {
         throw new HttpsError("invalid-argument", "Invalid product ID or stock quantity.");
       }
-
       const productRef = db.collection("Products").doc(productId);
-
       try {
         if (variantIndex === null || variantIndex === undefined) {
           await productRef.update({
@@ -330,6 +324,58 @@ exports.updateProductStock = onCall(
       } catch (error) {
         logger.error("Stock Update Failed:", error);
         throw new HttpsError("internal", "Stock update failed: " + error.message);
+      }
+    },
+);
+
+exports.updateOrderStatus = onCall(
+    {secrets: []}, // No secrets needed for this one
+    async (request) => {
+      // 1. Check for Admin Auth
+      if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in.");
+      }
+      if (!ADMIN_UIDS.includes(request.auth.uid)) {
+        throw new HttpsError("permission-denied", "You must be an admin to do this.");
+      }
+
+      // 2. Get data from the frontend
+      const {orderId, newStatus} = request.data;
+      if (!orderId || !newStatus) {
+        throw new HttpsError("invalid-argument", "Missing orderId or newStatus.");
+      }
+
+      try {
+        // 3. Get the Admin order to find the customer's UID
+        const adminOrderRef = db.collection("orders").doc(orderId);
+        const adminOrderDoc = await adminOrderRef.get();
+        if (!adminOrderDoc.exists) {
+          throw new HttpsError("not-found", "Order not found in admin collection.");
+        }
+
+        const userId = adminOrderDoc.data().userId;
+        if (!userId) {
+          throw new HttpsError("internal", "Order is missing a userId.");
+        }
+
+        // 4. Get the User's order reference
+        const userOrderRef = db.collection("users").doc(userId).collection("orders").doc(orderId);
+
+        const statusUpdate = {
+          status: newStatus,
+        };
+
+        // 5. Update BOTH documents in parallel
+        await Promise.all([
+          adminOrderRef.update(statusUpdate),
+          userOrderRef.update(statusUpdate),
+        ]);
+
+        logger.info(`Order ${orderId} status updated to ${newStatus} by admin ${request.auth.uid}`);
+        return {status: "success", orderId: orderId, newStatus: newStatus};
+      } catch (error) {
+        logger.error("Order Status Update Failed:", error);
+        throw new HttpsError("internal", "Order status update failed: " + error.message);
       }
     },
 );
