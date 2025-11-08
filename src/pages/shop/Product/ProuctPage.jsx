@@ -64,27 +64,29 @@ const ProductPage = () => {
     );
   }
 
+ // ... (inside ProductPage.js)
+
   return (
     <div className="mx-auto p-4 max-w-7xl">
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="grid md:grid-cols-2 gap-2 md:gap-10">
         {/* Product Image */}
-        <div className="flex-1">
+        <div className="flex-1 ">
           <ProductImageGallery
             images={selectedVariant.images}
             productName={selectedVariant.name}
           />
         </div>
-
+ <div>
         {/* Variant Selector */}
-        {product.variants && (
-          <div className="mt-4">
-            <VariantSelector
-              variants={product.variants}
-              activeVariant={selectedVariant}
-              onSelect={setSelectedVariant}
-            />
-          </div>
-        )}
+          {product.variants && (
+            <div className="">
+              <VariantSelector
+                variants={product.variants}
+                activeVariant={selectedVariant}
+                onSelect={setSelectedVariant}
+              />
+            </div>
+          )}
 
         {/* Product info, prices, and actions */}
         <ProductInfo
@@ -93,11 +95,13 @@ const ProductPage = () => {
           setSelectedVariant={setSelectedVariant}
           productId={productId}
         />
-      </div>
-
-      <Separator className="my-0" />
+        <Separator className="my-0" />
       <ProductDetails product={product} />
       <Separator className="m-12" />
+      </div>
+      </div>
+
+    
       <ProductReviewSection
       productId={productId}/>
     </div>

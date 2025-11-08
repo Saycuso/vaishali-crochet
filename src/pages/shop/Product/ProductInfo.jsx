@@ -92,14 +92,14 @@ const ProductInfo = ({ product, selectedVariant, productId }) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col justify-between mt-2">
+    <div className="flex-1 flex flex-col justify-between mt-5">
       <div className="space-y-2">
         <h1 className="text-xl md:text-4xl font-semibold text-gray-900 text-left">
           {product.name}
         </h1>
 
         {/* Price Section */}
-        <div className="mt-3 flex items-baseline">
+        <div className="mt-1 flex items-baseline">
           {originalprice && (
             <div className="flex-col flex items-baseline gap-2">
               <span className="text-2xl font-semibold text-red-600">
