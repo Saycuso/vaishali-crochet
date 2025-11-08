@@ -111,7 +111,7 @@ const HeroSection = () => {
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                   <div
-                    className="absolute inset-0 bg-black/50"
+                    className="absolute inset-0 bg-black/30"
                     aria-hidden="true"
                   />
                   <div className="relative z-10 px-6">
