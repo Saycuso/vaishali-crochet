@@ -104,7 +104,7 @@ const HeroSection = () => {
           {heroImages.map((imageSrc, index) => (
             <CarouselItem key={index}>
               <div className="p-1">
-                <section className="relative text-center w-full py-20 md:py-28 rounded-lg shadow-lg overflow-hidden">
+                <section className="relative text-center w-full py-20 md:py-28  rounded-lg shadow-lg overflow-hidden">
                   <img
                     src={imageSrc}
                     alt={`Hero background ${index + 1}`}

@@ -150,7 +150,8 @@ const ProductDetails = ({ product }) => {
   }
 
   return (
-    <div className="mt-6">
+    // --- ✅ FIX: Added max-height, overflow, and padding ---
+    <div className="mt-6 max-h-[60vh] md:max-h-[350px] overflow-y-auto pr-2">
       <CustomAccordion items={accordionItems} />
     </div>
   );

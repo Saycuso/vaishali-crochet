@@ -57,7 +57,7 @@ const ProductImageGallery = ({ images, productName }) => {
           <img
             src={activeImage}
             alt={productName}
-            className="w-full md:!h-[500px] h-[300px] sm:h-[350px] rounded-lg shadow-md mb-4 cursor-pointer transition-transform duration-300 hover:scale-105 object-cover"
+            className="w-full md:h-[500px] h-[300px] sm:h-[350px] rounded-lg shadow-md mb-4 cursor-pointer transition-transform duration-300 hover:scale-105 object-cover"
           />
         </DialogTrigger>
         <DialogContent className="max-w-[90vw] md:max-w-2xl p-0 border-none">

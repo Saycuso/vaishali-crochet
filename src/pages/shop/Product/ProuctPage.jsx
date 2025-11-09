@@ -67,16 +67,16 @@ const ProductPage = () => {
  // ... (inside ProductPage.js)
 
   return (
-    <div className="mx-auto p-4 max-w-7xl">
-      <div className="grid md:grid-cols-2 gap-2 md:gap-10">
+    <div className="mx-auto p-4 max-w-8xl">
+      <div className="grid md:grid-cols-5 gap-2 md:gap-10">
         {/* Product Image */}
-        <div className="flex-1 ">
+        <div className="flex-1 md:col-span-3">
           <ProductImageGallery
             images={selectedVariant.images}
             productName={selectedVariant.name}
           />
         </div>
- <div>
+ <div className="md:col-span-2">
         {/* Variant Selector */}
           {product.variants && (
             <div className="">
@@ -97,10 +97,10 @@ const ProductPage = () => {
         />
         <Separator className="my-0" />
       <ProductDetails product={product} />
-      <Separator className="m-12" />
-      </div>
-      </div>
 
+      </div>
+      </div>
+      <Separator className="m-12" />
     
       <ProductReviewSection
       productId={productId}/>
