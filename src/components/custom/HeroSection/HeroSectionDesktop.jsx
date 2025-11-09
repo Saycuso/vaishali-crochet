@@ -20,15 +20,12 @@ const DEFAULT_IMAGE_URL =
 
 const HeroSectionDesktop = () => {
   const navigate = useNavigate();
-
-  // 🧩 State
   const [heroImages, setHeroImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [carouselApi, setCarouselApi] = useState(null);
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
 
-  // 🎬 Autoplay ref
   const autoplay = useRef(
     Autoplay({
       delay: 5000,
@@ -37,7 +34,6 @@ const HeroSectionDesktop = () => {
     })
   );
 
-  // 🪄 Fetch hero images from Firestore
   useEffect(() => {
     const fetchHeroImages = async () => {
       try {
@@ -62,116 +58,120 @@ const HeroSectionDesktop = () => {
         setIsLoading(false);
       }
     };
-
     fetchHeroImages();
   }, []);
 
-  // 🎡 Carousel logic
   useEffect(() => {
     if (!carouselApi) return;
-
     const updateCurrent = () => setCurrent(carouselApi.selectedScrollSnap());
     setCount(carouselApi.scrollSnapList().length);
-    setCurrent(carouselApi.selectedScrollSnap());
-
     carouselApi.on("select", updateCurrent);
     return () => carouselApi.off("select", updateCurrent);
   }, [carouselApi]);
 
-  // 🌀 Loading skeleton
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="flex items-center justify-center h-[500px] bg-gray-100 animate-pulse rounded-lg" />
     );
-  }
 
-  // 💫 Render
   return (
-    <section className="relative flex flex-col items-center w-full max-w-7xl mx-auto py-8 px-8 lg:px-16 rounded-2xl overflow-hidden bg-gradient-to-r from-pink-50 via-white to-orange-50 shadow-lg">
-      {/* 🌐 Local nav links above the hero */}
-      <nav className="flex gap-10 mb-6 self-end pr-4">
-        {[
-          { label: "About Us", path: "/about" },
-          { label: "Contact Us", path: "/contact" },
-          { label: "Careers", path: "/careers" },
-        ].map(({ label, path }) => (
-          <button
-            key={path}
-            onClick={() => navigate(path)}
-            className="text-gray-600 hover:text-orange-600 font-medium transition-colors text-lg"
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+  <section className="relative flex flex-col items-center w-full  mx-auto py-16 px-10 lg:px-20 overflow-hidden">
+    {/* 🌈 Background layer */}
+    <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#fff7f2] via-[#ffe9e9] to-[#fff5ef]" />
 
-      {/* 🧱 Main Hero Content */}
-      <div className="flex items-center justify-between w-full">
-        {/* 🖼 Left: Carousel */}
-        <div className="w-1/2 rounded-xl overflow-hidden relative">
-          <Carousel
-            setApi={setCarouselApi}
-            plugins={[autoplay.current]}
-            className="w-full"
-            opts={{ loop: true }}
-          >
-            <CarouselContent>
-              {heroImages.map((src, index) => (
-                <CarouselItem key={index}>
-                  <img
-                    src={src}
-                    alt={`Hero ${index + 1}`}
-                    className="w-full h-[500px] object-cover rounded-xl"
-                  />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
+    {/* ☁️ Soft glow background blobs */}
+    <div className="absolute -top-20 -left-40 w-[500px] h-[500px] bg-orange-200/40 blur-[130px] rounded-full -z-10" />
+    <div className="absolute bottom-0 -right-32 w-[600px] h-[600px] bg-pink-200/40 blur-[140px] rounded-full -z-10" />
 
-            {/* 🧭 Controls */}
-            <CarouselPrevious className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-black/30 hover:bg-black/50 border-none text-white" />
-            <CarouselNext className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-black/30 hover:bg-black/50 border-none text-white" />
+    {/* 🌐 Local nav */}
+    <nav className="flex gap-10 mb-10 self-end pr-4">
+      {[
+        { label: "About Us", path: "/about" },
+        { label: "Contact Us", path: "/contact" },
+        { label: "Careers", path: "/careers" },
+      ].map(({ label, path }) => (
+        <button
+          key={path}
+          onClick={() => navigate(path)}
+          className="text-gray-700 hover:text-orange-600 font-medium transition-all duration-300 relative group"
+        >
+          {label}
+          <span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
+        </button>
+      ))}
+    </nav>
 
-            {/* ⚪ Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-              {Array.from({ length: count }).map((_, index) => (
-                <button
-                  key={index}
-                  aria-label={`Go to slide ${index + 1}`}
-                  onClick={() => {
-                    carouselApi?.scrollTo(index);
-                    autoplay.current.reset();
-                  }}
-                  className={`h-3 w-3 rounded-full transition-colors ${
-                    current === index ? "bg-orange-600" : "bg-white/50"
-                  }`}
+    {/* 💎 Elevated Hero Card */}
+    <div className="relative flex items-center justify-between w-full rounded-3xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.25)] bg-gradient-to-r from-[#fffdfc] via-[#fff8f3] to-[#fff4ef] border border-orange-100/40 backdrop-blur-sm px-10 py-12">
+      
+      {/* 🖼 Left: Carousel */}
+      <div className="w-1/2 rounded-2xl overflow-hidden shadow-[0_8px_30px_-8px_rgba(0,0,0,0.3)] relative">
+        <Carousel
+          setApi={setCarouselApi}
+          plugins={[autoplay.current]}
+          opts={{ loop: true }}
+          className="w-full"
+        >
+          <CarouselContent>
+            {heroImages.map((src, index) => (
+              <CarouselItem key={index}>
+                <img
+                  src={src}
+                  alt={`Hero ${index + 1}`}
+                  className="w-full h-[500px] object-cover transition-transform duration-700 hover:scale-105"
                 />
-              ))}
-            </div>
-          </Carousel>
-        </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
 
-        {/* ✨ Right: Text content */}
-        <div className="w-1/2 pl-10 flex flex-col items-center justify-center">
-          <h1 className="text-5xl font-extrabold text-gray-800 leading-tight mb-4">
-            Handmade Crochet by{" "}
-            <span className="text-orange-600">Vaishali</span>
-          </h1>
+          <CarouselPrevious className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-black/30 hover:bg-black/50 border-none text-white backdrop-blur-md" />
+          <CarouselNext className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-black/30 hover:bg-black/50 border-none text-white backdrop-blur-md" />
 
-          <p className="text-lg text-gray-600 mb-8 max-w-md leading-relaxed">
-            From our hands to your heart — explore our cozy, unique handmade
-            creations crafted with love and care.
-          </p>
-
-          <Button
-            className="bg-orange-600 hover:bg-orange-700 text-white rounded-full px-12 py-5 text-lg font-medium shadow-lg transition-all duration-300 "
-            onClick={() => navigate("/shop")}
-          >
-            Shop Now
-          </Button>
-        </div>
+          {/* Dots */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {Array.from({ length: count }).map((_, index) => (
+              <button
+                key={index}
+                aria-label={`Go to slide ${index + 1}`}
+                onClick={() => {
+                  carouselApi?.scrollTo(index);
+                  autoplay.current.reset();
+                }}
+                className={`h-3 w-3 rounded-full transition-all ${
+                  current === index
+                    ? "bg-orange-600 scale-110"
+                    : "bg-white/60 hover:bg-orange-300"
+                }`}
+              />
+            ))}
+          </div>
+        </Carousel>
       </div>
-    </section>
-  );
+
+      {/* ✨ Right: Text */}
+      <div className="w-1/2 pl-12 flex flex-col items-center justify-center">
+        <h1 className="text-6xl font-extrabold text-gray-900 leading-tight mb-5 drop-shadow-sm">
+          Handmade Crochet by{" "}
+          <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            Vaishali
+          </span>
+        </h1>
+
+        <p className="text-lg text-gray-600 mb-8 max-w-md leading-relaxed">
+          From our hands to your heart — explore our cozy, unique handmade
+          creations crafted with love and care.
+        </p>
+
+        <Button
+          className="rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-pink-500 hover:to-orange-500 text-white px-12 py-5 text-lg font-semibold shadow-lg hover:shadow-[0_8px_25px_-5px_rgba(255,111,0,0.4)] transition-all duration-300"
+          onClick={() => navigate("/shop")}
+        >
+          Shop Now
+        </Button>
+      </div>
+    </div>
+  </section>
+);
 };
 
 export default HeroSectionDesktop;
