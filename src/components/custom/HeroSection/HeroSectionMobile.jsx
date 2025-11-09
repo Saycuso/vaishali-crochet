@@ -17,7 +17,7 @@ const DECORATIVE_HERO_DOC_ID = "FsjPBGYTg2W4phsydIgT";
 const DEFAULT_IMAGE_URL =
   "https://via.placeholder.com/1200x600?text=Handmade+Crochet+by+Vaishali";
 
-const HeroSection = () => {
+const HeroSectionMobile = () => {
   const navigate = useNavigate();
   const [heroImages, setHeroImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,4 +170,4 @@ const HeroSection = () => {
   );
 };
 
-export default HeroSection;
+export default HeroSectionMobile;

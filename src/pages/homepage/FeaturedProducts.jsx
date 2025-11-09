@@ -58,7 +58,7 @@ const FeaturedProducts = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+    <div className="grid  sm:grid-cols-2 md:grid-cols-3 gap-8">
       {isLoading
         ? [1, 2, 3].map((i) => <ProductCardSkeleton key={i} />)
         : // --- CHANGED: Simplified render logic ---

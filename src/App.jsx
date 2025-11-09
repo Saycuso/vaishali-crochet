@@ -1,4 +1,4 @@
-import HomePage from "./pages/home/HomePage";
+import HomePage from "./pages/homepage/HomePage";
 import Navbar from "./components/custom/Navbar"; // Your new Navbar component
 import About from "./pages/about/About";
 import Contact from "./pages/contact/Contact";
