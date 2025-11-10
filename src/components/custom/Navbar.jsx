@@ -84,7 +84,7 @@ const Navbar = () => {
   // -----------------------------------------------------
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className="bg-white shadow-sm sticky top-0 z-40">
       <nav className="mx-auto p-1 flex justify-between items-center">
         {/* ================= Mobile Menu ================= */}
         <div className="md:hidden">
@@ -185,7 +185,7 @@ const Navbar = () => {
 
         {/* ================= Logo ================= */}
         <Link to="/" className="text-2xl font-bold text-gray-800">
-          <img src={LOGO} className="h-10 w-auto" alt="Logo" />
+          <img src={LOGO} className="h-10 w-auto ml-5" alt="Logo" />
         </Link>
 
         {/* ================= Desktop Navigation ================= */}

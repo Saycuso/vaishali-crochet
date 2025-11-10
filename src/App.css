@@ -49,6 +49,10 @@
   #root .md\:flex-row {
     flex-direction: row;
   }
+
+  footer .md\:flex-row {
+    flex-direction: row;
+  }
 }
 
 @keyframes fadeIn {
@@ -64,4 +68,30 @@
 
 .animate-fadeIn {
   animation: fadeIn 1s ease-out forwards;
+}
+
+/* ============================================= */
+/* FIX for "Aurora" Gradient Animation          */
+/* ============================================= */
+
+/* 1. Defines the animation keyframes */
+@keyframes moving-gradient-aurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 2. Creates a utility class to apply the animation */
+.animate-gradient-aurora {
+  /* Makes the gradient 4x bigger so it has room to move */
+  background-size: 400% 400%; 
+  
+  /* Applies the animation */
+  animation: moving-gradient-aurora 15s ease-in-out infinite;
 }

@@ -27,10 +27,20 @@ const OrderSummary = ({ cartItems, customerInfo }) => {
           <div key={item.id} className="py-3">
             {/* 🔹 Row 1: Item name + total price */}
             <div className="flex justify-between items-start">
-              <p className="text-sm font-medium text-gray-900 leading-snug">
-                {`${item.productname} (${item.name})`}
-              </p>
-              <p className="text-sm font-semibold text-gray-900">
+              
+              {/* --- 🛠️ FIX START --- */}
+              {/* We use flex, min-w-0, and truncate to fix the long text */}
+              <div className="flex min-w-0 mr-4"> 
+                <span className="text-sm font-medium text-gray-900 leading-snug truncate">
+                  {item.productname}
+                </span>
+                <span className="text-sm font-medium text-gray-900 leading-snug flex-shrink-0">
+                  &nbsp;({item.name})
+                </span>
+              </div>
+              {/* --- 🛠️ FIX END --- */}
+
+              <p className="text-sm font-semibold text-gray-900 flex-shrink-0"> {/* Added flex-shrink-0 here too */}
                 ₹{(item.price * item.quantity).toFixed(2)}
               </p>
             </div>

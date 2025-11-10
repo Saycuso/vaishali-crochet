@@ -7,13 +7,13 @@ const Footer = () => {
     <footer className="w-full bg-gray-900 text-gray-300 py-8 px-4 text-center mt-auto">
       
       {/* Content Wrapper: Stacks on mobile, Row on PC */}
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between md:!justify-center md:gap-30 items-start md:items-center">
         
         {/* Left Section: Branding and Copyright */}
         <div className="mb-6 md:mb-0 text-left">
-          <p className="text-xl font-semibold text-orange-400 mb-2">Vaishalis crochet</p>
+          <p className="text-xl font-semibold text-orange-400 mb-2">Vaishalis Crochet</p>
           <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} Vaishalis crochet. All rights reserved.
+            © {new Date().getFullYear()} Vaishalis Crochet. All rights reserved.
             <br />
             Handmade with Love, Made in India.
           </p>
@@ -21,7 +21,7 @@ const Footer = () => {
 
         {/* Right Section: Navigation Columns */}
         {/* Added gap-12 for better PC spacing between the two columns */}
-        <div className="flex flex-col md:flex-row md:gap-12 gap-6 text-left">
+        <div className="flex flex-col md:flex-row md:gap-30 gap-6 text-left">
           
           {/* Column 1: Shop & Info */}
           <div className="flex flex-col space-y-2">
