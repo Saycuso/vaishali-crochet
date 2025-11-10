@@ -172,7 +172,7 @@ const OrderTrackingDetails = () => {
                 className="flex gap-3 border rounded-lg p-2 hover:shadow-sm transition"
               >
                 <img
-                  src={item.thumbnail || "https://via.placeholder.com/100"}
+                  src={item.thumbnail || item.images?.[0] || "https://via.placeholder.com/100"}
                   alt={item.name}
                   className="w-16 h-16 object-cover rounded-md border"
                 />
