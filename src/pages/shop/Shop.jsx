@@ -62,7 +62,7 @@ const Shop = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 py-10 px-4 md:px-10">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50  to-pink-100 py-10 px-4 md:px-10">
       {/* 🧶 Header Section */}
       <div className="text-center mb-10">
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800">

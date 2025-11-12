@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { db } from "@/firebase";
+import { db, auth } from "@/firebase"; // 👈 1. IMPORTED auth
 import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged, signOut } from "firebase/auth"; // 👈 2. IMPORTED auth functions
 import Autoplay from "embla-carousel-autoplay";
 import {
   Carousel,
@@ -20,6 +21,7 @@ const DEFAULT_IMAGE_URL =
 
 const HeroSectionDesktop = () => {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null); // 👈 3. ADDED state for the user
   const [heroImages, setHeroImages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [carouselApi, setCarouselApi] = useState(null);
@@ -33,6 +35,23 @@ const HeroSectionDesktop = () => {
       stopOnMouseEnter: true,
     })
   );
+
+  // 👈 4. ADDED useEffect to listen for auth changes
+  useEffect(() => {
+    // onAuthStateChanged returns an "unsubscribe" function
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setCurrentUser(user);
+      } else {
+        // User is signed out
+        setCurrentUser(null);
+      }
+    });
+
+    // This cleans up the listener when the component unmounts
+    return () => unsubscribe();
+  }, []); // Empty array ensures this runs only once on mount
 
   useEffect(() => {
     const fetchHeroImages = async () => {
@@ -69,6 +88,16 @@ const HeroSectionDesktop = () => {
     return () => carouselApi.off("select", updateCurrent);
   }, [carouselApi]);
 
+  // 👈 5. CREATED a logout handler
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/"); // Navigate to homepage after logout
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   if (isLoading)
     return (
       <div className="flex text-center justify-center h-[500px] bg-gray-100 animate-pulse rounded-lg" />
@@ -100,13 +129,33 @@ const HeroSectionDesktop = () => {
           </button>
         ))}
 
-        {/* 🔥 Highlighted Sign-Up button */}
-        <button
-          onClick={() => navigate("/signup")}
-          className="ml-4 px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold shadow-md hover:shadow-[0_8px_25px_-5px_rgba(255,111,0,0.4)] hover:scale-[1.05] active:scale-[0.97] transition-all duration-300"
-        >
-          Sign Up
-        </button>
+        {/* 👇 6. ADDED conditional logic for the buttons */}
+        {currentUser ? (
+          // --- USER IS LOGGED IN ---
+          <>
+            <button
+              onClick={() => navigate("/orders")} // Or /admin
+              className="text-gray-700 hover:text-orange-600 font-medium transition-all duration-300 relative group"
+            >
+              My Orders
+              <span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-5 py-2.5 rounded-full bg-gray-600 hover:bg-gray-700 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.97] transition-all duration-300"
+            >
+              Log Out
+            </button>
+          </>
+        ) : (
+          // --- USER IS LOGGED OUT ---
+          <button
+            onClick={() => navigate("/signup")}
+            className=" px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold shadow-md hover:shadow-[0_8px_25px_-5px_rgba(255,111,0,0.4)] hover:scale-[1.05] active:scale-[0.97] transition-all duration-300"
+          >
+            Sign Up
+          </button>
+        )}
       </nav>
 
       {/* 💎 Elevated Hero Card */}

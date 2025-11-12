@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 /* eslint-disable no-unused-vars */
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {setGlobalOptions} = require("firebase-functions/v2");
@@ -259,11 +260,36 @@ exports.verifyAndDeductStock = onCall(
               secure: false,
               auth: {user: process.env.BREVO_USER, pass: process.env.BREVO_PASS},
             });
+            const trackingUrl = "https://vaishaliscrochet.in/orderstrackingpage";
             const mailOptions = {
               from: "\"Vaishali's Crochet Store\" <reactretro510@gmail.com>",
               to: customerEmail,
               subject: `Order Confirmation #${razorpay_order_id}`,
-              html: `<h1>Order Confirmation</h1><p>Thank you for your order!</p><p><strong>Order ID:</strong> ${razorpay_order_id}</p>`,
+              html: `
+                <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 16px; color: #333;">
+                  <h1 style="color: #222;">Order Confirmation</h1>
+                  <p>Thank you for your order! We're getting your handmade items ready.</p>
+                  <p style="margin-bottom: 25px;">
+                    <strong>Order ID:</strong> ${razorpay_order_id}
+                  </p>
+                  
+                  <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0;">
+                    <tr>
+                      <td align="center" bgcolor="#ff6600" style="border-radius: 50px;">
+                        <a href="${trackingUrl}" target="_blank" style="font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 50px; display: inline-block; border: 0;">
+                          Track Your Order
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <p style="margin-top: 25px; font-size: 14px; color: #888;">
+                    Thanks,
+                    <br>
+                    Vaishali's Crochet
+                  </p>
+                </div>
+              `,
             };
 
             await transporter.sendMail(mailOptions);
