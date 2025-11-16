@@ -6,6 +6,12 @@ const ScrollToTop = () => {
   // Get the current page's path (e.g., "/shop", "/checkout")
   const { pathname } = useLocation();
 
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []); // Empty array means it only runs on mount
+
   // This effect runs every single time the 'pathname' changes
   useEffect(() => {
     window.scrollTo(0, 0);
