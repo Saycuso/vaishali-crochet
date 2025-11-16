@@ -68,7 +68,7 @@ const ProductPage = () => {
 
   return (
     <div className="mx-auto p-4 max-w-8xl">
-      <div className="grid md:grid-cols-5 gap-2 md:gap-10">
+      <div className="grid grid-cols-1 md:!grid-cols-5 gap-2 md:gap-10">
         {/* Product Image */}
         <div className="flex-1 md:col-span-3">
           <ProductImageGallery

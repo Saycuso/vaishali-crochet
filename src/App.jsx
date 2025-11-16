@@ -41,11 +41,11 @@ const AppContent = () => {
   const showNavbar = location.pathname !== "/";
 
   return (
-    <>
-      <ScrollToTop />
+    <>  
       <CartSync />
       {showNavbar && <Navbar />}
       <CartSidebar />
+       <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<Shop />} />

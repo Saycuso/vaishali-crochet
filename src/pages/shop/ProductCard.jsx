@@ -154,7 +154,6 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
   return (
     <Card
       className="rounded-2xl shadow-md bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group gap-2"
-      onClick={() => navigate(`/shop/${product.id}`)}
     >
       {/* Discount Badge */}
       {hasDiscount && totalStock > 0 && (
