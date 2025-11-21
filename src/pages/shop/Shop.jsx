@@ -3,6 +3,8 @@ import { ProductCard } from "@/pages/shop/ProductCard";
 import { useEffect, useState } from "react";
 import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -55,8 +57,23 @@ const Shop = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-2xl text-orange-600">
-        Loading products...
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-100 py-10 px-4 md:px-10">
+        <div className="text-center mb-10">
+           {/* Skeleton Header */}
+           <Skeleton height={50} width={300} className="mb-4" />
+           <Skeleton height={4} width={100} className="mx-auto rounded-full" />
+        </div>
+        
+        <div className="grid md:grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+           {/* Show 8 fake cards while loading */}
+           {[...Array(8)].map((_, i) => (
+             <div key={i} className="border border-white rounded-2xl p-3 bg-white shadow-sm">
+               <Skeleton height={200} className="rounded-xl mb-3" />
+               <Skeleton count={2} />
+               <Skeleton width="40%" height={30} className="mt-2" />
+             </div>
+           ))}
+        </div>
       </div>
     );
   }

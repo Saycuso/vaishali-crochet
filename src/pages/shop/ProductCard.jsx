@@ -152,9 +152,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
   };
 
   return (
-    <Card
-      className="rounded-2xl shadow-md bg-white overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative group gap-2"
-    >
+    <Card className="rounded-2xl bg-white overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 relative group gap-2 border border-gray-100">
       {/* Discount Badge */}
       {hasDiscount && totalStock > 0 && (
         <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
