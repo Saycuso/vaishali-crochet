@@ -189,6 +189,7 @@ exports.verifyAndDeductStock = onCall(
       const adminOrderRef = db.collection("orders").doc(razorpay_order_id);
       let customerEmail = "";
 
+      // --- MAIN TRY BLOCK (Protects the critical DB transaction) ---
       try {
         await db.runTransaction(async (transaction) => {
           const orderDoc = await transaction.get(userOrderRef);
@@ -206,36 +207,32 @@ exports.verifyAndDeductStock = onCall(
 
             const productData = productDoc.data();
             const quantityToDeduct = item.quantity;
-            const variantIndex = item.variantIndex; // 👈 Get variantIndex from the order item
+            const variantIndex = item.variantIndex;
 
             if (variantIndex !== null && variantIndex !== undefined) {
-              // --- It's a VARIABLE product ---
+              // Variable Product Logic
               const variants = productData.variants;
               if (!variants || !variants[variantIndex]) {
                 throw new Error(`Variant ${variantIndex} not found for ${item.productId}`);
               }
-
               const currentStock = variants[variantIndex].stockQuantity;
               if (currentStock < quantityToDeduct) {
                 transaction.update(userOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
                 transaction.update(adminOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
                 throw new Error(`Insufficient stock for product variant: ${item.variantName}`);
               }
-
-              // Update stock *inside* the array
               variants[variantIndex].stockQuantity = currentStock - quantityToDeduct;
-              transaction.update(productRef, {variants: variants}); // Write the whole array back
+              transaction.update(productRef, {variants: variants});
             } else {
-              // --- It's a SIMPLE product ---
+              // Simple Product Logic
               const currentStock = productData.stockQuantity;
               if (currentStock < quantityToDeduct) {
                 transaction.update(userOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
                 transaction.update(adminOrderRef, {status: "failed_out_of_stock", failedItem: item.productId});
                 throw new Error(`Insufficient stock for product: ${item.name}`);
               }
-
               const newStock = currentStock - quantityToDeduct;
-              transaction.update(productRef, {stockQuantity: newStock}); // Update top-level stock
+              transaction.update(productRef, {stockQuantity: newStock});
             }
           }
 
@@ -248,9 +245,20 @@ exports.verifyAndDeductStock = onCall(
           transaction.update(userOrderRef, updateData);
           transaction.update(adminOrderRef, updateData);
         });
+      } catch (error) {
+        // 🔴 IF WE LAND HERE, IT MEANS THE DATABASE UPDATE FAILED.
+        // We MUST tell the user it failed.
+        logger.error("Stock Deduction Failed:", error);
+        let errorMessage = "Verification failed.";
+        if (error && error.message) errorMessage = error.message;
+        throw new HttpsError("internal", errorMessage);
+      }
 
-        // --- Email logic (no changes) ---
-        if (customerEmail) {
+      // --- 🟢 EMAIL LOGIC (OUTSIDE THE MAIN TRY/CATCH) ---
+      // If code reaches here, the DB transaction was 100% successful.
+      // We start a NEW, ISOLATED try/catch just for the email.
+      if (customerEmail) {
+        try {
           if (!process.env.BREVO_HOST || !process.env.BREVO_USER || !process.env.BREVO_PASS) {
             logger.warn(`Brevo secrets not set for order: ${razorpay_order_id}. Skipping email.`);
           } else {
@@ -266,28 +274,11 @@ exports.verifyAndDeductStock = onCall(
               to: customerEmail,
               subject: `Order Confirmation #${razorpay_order_id}`,
               html: `
-                <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; font-size: 16px; color: #333;">
+                <div style="font-family: Arial, sans-serif; font-size: 16px; color: #333;">
                   <h1 style="color: #222;">Order Confirmation</h1>
                   <p>Thank you for your order! We're getting your handmade items ready.</p>
-                  <p style="margin-bottom: 25px;">
-                    <strong>Order ID:</strong> ${razorpay_order_id}
-                  </p>
-                  
-                  <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0;">
-                    <tr>
-                      <td align="center" bgcolor="#ff6600" style="border-radius: 50px;">
-                        <a href="${trackingUrl}" target="_blank" style="font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 50px; display: inline-block; border: 0;">
-                          Track Your Order
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  
-                  <p style="margin-top: 25px; font-size: 14px; color: #888;">
-                    Thanks,
-                    <br>
-                    Vaishali's Crochet
-                  </p>
+                  <p><strong>Order ID:</strong> ${razorpay_order_id}</p>
+                  <p><a href="${trackingUrl}">Track Your Order</a></p>
                 </div>
               `,
             };
@@ -295,16 +286,16 @@ exports.verifyAndDeductStock = onCall(
             await transporter.sendMail(mailOptions);
             logger.info(`Email sent for Order: ${razorpay_order_id}`);
           }
+        } catch (emailError) {
+          // ⚠️ HERE IS THE FIX:
+          // We catch the email error, LOG IT, but we DO NOT throw it further.
+          // This ensures the function returns "success" to the frontend.
+          logger.error(`Order Captured, but Email Failed for ${razorpay_order_id}:`, emailError);
         }
-        return {status: "success", orderId: razorpay_order_id};
-      } catch (error) {
-        logger.error("Stock Deduction or Email Failed:", error);
-        let errorMessage = "Verification failed.";
-        if (error && error.description) errorMessage = error.description;
-        else if (error && error.message) errorMessage = error.message;
-        else if (error) errorMessage = error.toString();
-        throw new HttpsError("internal", errorMessage);
       }
+
+      // We successfully return success even if email failed
+      return {status: "success", orderId: razorpay_order_id};
     },
 );
 
