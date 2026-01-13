@@ -19,6 +19,57 @@ const ADMIN_UIDS = [
   "dMH1JKeZw9Yh9xTuwheWmc8Vhux2",
 ];
 
+// --- 1. NEW HELPER FUNCTION FOR WHATSAPP ---
+async function sendWhatsAppConfirmation(phone, name, orderId) {
+  const token = process.env.WHATSAPP_TOKEN;
+  const phoneId = process.env.WHATSAPP_PHONE_ID;
+
+  if (!token || !phoneId) {
+    console.warn("Skipping WhatsApp: Missing Token or Phone ID.");
+    return;
+  }
+
+  // Sanitize Phone Number: Remove '+' and ensure it starts with country code (e.g., 91)
+  let formattedPhone = phone.replace(/\+/g, "").replace(/\s/g, "");
+  if (formattedPhone.length === 10) {
+    formattedPhone = "91" + formattedPhone; // Assume India if 10 digits
+  }
+
+  const url = `https://graph.facebook.com/v17.0/${phoneId}/messages`;
+
+  // We use the standard "hello_world" template for testing because creating custom templates requires verification.
+  // ONCE LIVE: You will create a template named "order_confirmation" in FB dashboard.
+  const payload = {
+    messaging_product: "whatsapp",
+    to: formattedPhone,
+    type: "template",
+    template: {
+      name: "hello_world", // 👈 CHANGE THIS to your custom template name later
+      language: {code: "en_US"},
+    },
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error("WhatsApp API Error:", data.error);
+    } else {
+      console.log(`WhatsApp sent to ${formattedPhone}`);
+    }
+  } catch (e) {
+    console.error("WhatsApp Network Error:", e);
+  }
+}
+
 // --- Helper Functions (No changes) ---
 function getShippingCost(pincode) {
   if (!pincode || pincode.length < 3) return 100;
@@ -188,6 +239,8 @@ exports.verifyAndDeductStock = onCall(
       const userOrderRef = db.collection("users").doc(uid).collection("orders").doc(razorpay_order_id);
       const adminOrderRef = db.collection("orders").doc(razorpay_order_id);
       let customerEmail = "";
+      let customerPhone = ""; // 👈 NEW VARIABLE
+      let customerName = ""; // 👈 NEW VARIABLE
 
       // --- MAIN TRY BLOCK (Protects the critical DB transaction) ---
       try {
@@ -199,6 +252,8 @@ exports.verifyAndDeductStock = onCall(
           if (orderData.status === "captured") return;
 
           customerEmail = orderData.customerInfo.email;
+          customerPhone = orderData.customerInfo.phone; // 👈 Get Phone
+          customerName = orderData.customerInfo.name; // 👈 Get Name
 
           for (const item of orderData.items) {
             const productRef = db.collection("Products").doc(item.productId);
@@ -293,8 +348,16 @@ exports.verifyAndDeductStock = onCall(
           logger.error(`Order Captured, but Email Failed for ${razorpay_order_id}:`, emailError);
         }
       }
+      // B. WHATSAPP
+      if (customerPhone) {
+        // We wrap this in a try/catch so it never breaks the order flow
+        try {
+          await sendWhatsAppConfirmation(customerPhone, customerName, razorpay_order_id);
+        } catch (waError) {
+          logger.error("WhatsApp Failed (Non-fatal):", waError);
+        }
+      }
 
-      // We successfully return success even if email failed
       return {status: "success", orderId: razorpay_order_id};
     },
 );

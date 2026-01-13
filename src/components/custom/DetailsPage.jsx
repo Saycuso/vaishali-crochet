@@ -11,10 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { auth, db } from "@/firebase"; // Removed 'app'
+import { auth, db } from "@/firebase"; 
 import { onAuthStateChanged } from "firebase/auth";
-
-// const appId = app.options.appId; // No longer needed
 
 const DetailsPage = () => {
   const [phone, setPhone] = useState("");
@@ -33,11 +31,10 @@ const DetailsPage = () => {
 
   // --- Helper Function for Fetching ---
   const fetchProfile = useCallback(
-    async (uid) => {
-      // --- 🛠️ FIX: Use the new, simple path ---
+    async (user) => {
+      const uid = user.uid;
       const profileDocPath = `users/${uid}`;
       const userDocRef = doc(db, profileDocPath);
-      // ------------------------------------
 
       try {
         const docSnap = await getDoc(userDocRef);
@@ -49,9 +46,7 @@ const DetailsPage = () => {
           const profileIsComplete = data.name && data.phone && data.address && data.pincode;
           
           if (profileIsComplete && redirectAfterSave === "/checkout" && !isManualEdit) {
-            console.log(
-              "Profile exists & is complete. Skipping details form."
-            );
+            console.log("Profile exists & is complete. Skipping details form.");
             setIsLoading(false);
             navigate("/checkout", { replace: true });
             return;
@@ -59,12 +54,16 @@ const DetailsPage = () => {
           
           // Pre-fill the form for review/edit
           setName(data.name || "");
-          setPhone(data.phone || "");
+          setPhone(data.phone || user.phoneNumber || ""); // Use Firestore phone OR Auth phone
           setAddress(data.address || "");
           setPincode(data.pincode || "");
           console.log("Existing profile loaded from Firestore.");
         } else {
           console.log("No existing profile found. Starting with empty form.");
+          // If new user via Phone Login, pre-fill the phone number
+          if (user.phoneNumber) {
+            setPhone(user.phoneNumber);
+          }
         }
       } catch (e) {
         console.error("Error fetching the document: ", e);
@@ -73,17 +72,7 @@ const DetailsPage = () => {
         setIsLoading(false);
       }
     },
-    [
-      navigate,
-      setName,
-      setPhone,
-      setAddress,
-      setPincode,
-      setIsLoading,
-      isManualEdit,
-      redirectAfterSave,
-      setError,
-    ]
+    [navigate, isManualEdit, redirectAfterSave]
   );
 
   // --- EFFECT: AUTH STATE LISTENER & PROFILE FETCH ---
@@ -91,8 +80,8 @@ const DetailsPage = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUid(user.uid);
-        setUserEmail(user.email || "");
-        fetchProfile(user.uid);
+        setUserEmail(user.email || ""); // Phone users will have "" here
+        fetchProfile(user);
       } else {
         setCurrentUid(null);
         setUserEmail("");
@@ -107,7 +96,9 @@ const DetailsPage = () => {
   // --- HANDLER: SAVE TO FIRESTORE ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUid || !userEmail) {
+    
+    // 🛠️ FIX 1: Removed '!userEmail' check. Now we only check for UID.
+    if (!currentUid) {
       setError("You must be logged in to save details.");
       return;
     }
@@ -119,16 +110,14 @@ const DetailsPage = () => {
 
     setIsLoading(true);
     setError(null);
-    // We add email here, but it's not from the form
+
+    // If userEmail exists (Email login), save it. If empty (Phone login), save empty string.
     const profileData = { name, phone, address, pincode, email: userEmail };
 
     try {
-      // --- 🛠️ FIX: Use the new, simple path ---
       const profileDocPath = `users/${currentUid}`;
       const userDocRef = doc(db, profileDocPath);
-      // ------------------------------------
 
-      // Use { merge: true } so we don't overwrite other user fields by accident
       await setDoc(userDocRef, profileData, { merge: true });
 
       console.log(`User profile saved to Firestore at ${profileDocPath}`);
@@ -201,16 +190,21 @@ const DetailsPage = () => {
                 onChange={(e) => setPincode(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email (Login ID)</Label>
-              <Input
-                id="email"
-                type="email"
-                disabled
-                value={userEmail}
-                className="bg-gray-100 cursor-not-allowed"
-              />
-            </div>
+
+            {/* 🛠️ FIX 2: Only show this field if userEmail is not empty */}
+            {userEmail && (
+              <div className="space-y-2">
+                <Label htmlFor="email">Email (Login ID)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  disabled
+                  value={userEmail}
+                  className="bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+            )}
+
             {error && (
               <p className="text-sm text-red-600 text-center">{error}</p>
             )}

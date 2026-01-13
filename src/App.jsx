@@ -78,7 +78,6 @@ const AppContent = () => {
         <Route path="/detailspage" element={<DetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage db={db} />} />
         <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/admin/orders" element={<AdminOrdersPage db={db} />} />
         <Route
           path="/admin/orders"
           element={
