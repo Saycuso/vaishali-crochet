@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { db, auth } from "@/firebase"; // 👈 1. IMPORTED auth
+import { db, auth } from "@/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged, signOut } from "firebase/auth"; // 👈 2. IMPORTED auth functions
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import Autoplay from "embla-carousel-autoplay";
 import {
   Carousel,
@@ -13,45 +13,32 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-// 🔧 Constants
+// 1. 👇 USE A REAL URL HERE (Replace this with one of your actual Cloudinary/Firebase images for best results)
+const FALLBACK_IMAGE = "https://via.placeholder.com/1200x600?text=Handmade+Crochet+by+Vaishali"; 
 const HERO_COLLECTION = "hero-section-images";
 const DECORATIVE_HERO_DOC_ID = "FsjPBGYTg2W4phsydIgT";
-const DEFAULT_IMAGE_URL =
-  "https://via.placeholder.com/1200x600?text=Handmade+Crochet+by+Vaishali";
 
 const HeroSectionDesktop = () => {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(null); // 👈 3. ADDED state for the user
-  const [heroImages, setHeroImages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // 2. 👇 INITIALIZE WITH IMAGE IMMEDIATELY (No empty array, no loading state)
+  const [heroImages, setHeroImages] = useState([FALLBACK_IMAGE]); 
+  
   const [carouselApi, setCarouselApi] = useState(null);
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
 
   const autoplay = useRef(
-    Autoplay({
-      delay: 5000,
-      stopOnInteraction: false,
-      stopOnMouseEnter: true,
-    })
+    Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
 
-  // 👈 4. ADDED useEffect to listen for auth changes
   useEffect(() => {
-    // onAuthStateChanged returns an "unsubscribe" function
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in
-        setCurrentUser(user);
-      } else {
-        // User is signed out
-        setCurrentUser(null);
-      }
+      setCurrentUser(user ? user : null);
     });
-
-    // This cleans up the listener when the component unmounts
     return () => unsubscribe();
-  }, []); // Empty array ensures this runs only once on mount
+  }, []);
 
   useEffect(() => {
     const fetchHeroImages = async () => {
@@ -61,21 +48,15 @@ const HeroSectionDesktop = () => {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const images = data.ocassions?.Decorative;
-          setHeroImages(
-            Array.isArray(images) && images.length > 0
-              ? images
-              : [DEFAULT_IMAGE_URL]
-          );
-        } else {
-          setHeroImages([DEFAULT_IMAGE_URL]);
+          // 3. 👇 ONLY UPDATE IF WE HAVE DATA
+          if (data.ocassions?.Decorative?.length > 0) {
+            setHeroImages(data.ocassions.Decorative);
+          }
         }
       } catch (error) {
         console.error("Error fetching hero content:", error);
-        setHeroImages([DEFAULT_IMAGE_URL]);
-      } finally {
-        setIsLoading(false);
       }
+      // REMOVED setIsLoading(false) because we deleted the state
     };
     fetchHeroImages();
   }, []);
@@ -88,78 +69,72 @@ const HeroSectionDesktop = () => {
     return () => carouselApi.off("select", updateCurrent);
   }, [carouselApi]);
 
-  // 👈 5. CREATED a logout handler
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/"); // Navigate to homepage after logout
+      navigate("/");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
-  if (isLoading)
-    return (
-      <div className="flex text-center justify-center h-[500px] bg-gray-100 animate-pulse rounded-lg" />
-    );
+  // 4. 👇 REMOVED THE "if (isLoading)" BLOCK COMPLETELY.
+  // The component will now render instantly.
 
   return (
-    <section className="relative flex flex-col items-center w-full  mx-auto py-16 px-10 lg:px-20 overflow-hidden bg-gradient-to-r from-orange-200 to-pink-200 animate-gradient-aurora">
-      {/* 🌈 Background layer */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#fff7f2] via-[#ffe9e9] to-[#fff5ef]" />
+    <section className="relative flex flex-col items-center w-full mx-auto py-16 px-10 lg:px-20 overflow-hidden bg-gradient-to-r from-orange-200 to-pink-200 animate-gradient-aurora">
+       {/* 🌈 Background layer */}
+       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#fff7f2] via-[#ffe9e9] to-[#fff5ef]" />
 
-      {/* ☁️ Soft glow background blobs */}
-      <div className="absolute -top-20 -left-40 w-[500px] h-[500px] bg-orange-200/40 blur-[130px] rounded-full -z-10" />
-      <div className="absolute bottom-0 -right-32 w-[600px] h-[600px] bg-pink-200/40 blur-[140px] rounded-full -z-10" />
+       {/* ☁️ Soft glow background blobs */}
+       <div className="absolute -top-20 -left-40 w-[500px] h-[500px] bg-orange-200/40 blur-[130px] rounded-full -z-10" />
+       <div className="absolute bottom-0 -right-32 w-[600px] h-[600px] bg-pink-200/40 blur-[140px] rounded-full -z-10" />
 
-      {/* 🌐 Local nav */}
-      <nav className="flex gap-10 mb-10 self-end pr-4">
-        {[
-          { label: "About Us", path: "/about" },
-          { label: "Contact Us", path: "/contact" },
-          { label: "Careers", path: "/careers" },
-        ].map(({ label, path }) => (
-          <button
-            key={path}
-            onClick={() => navigate(path)}
-            className="text-gray-700 hover:text-orange-600 font-medium transition-all duration-300 relative group"
-          >
-            {label}
-            <span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
-          </button>
-        ))}
+       {/* 🌐 Local nav */}
+       <nav className="flex gap-10 mb-10 self-end pr-4">
+         {[
+           { label: "About Us", path: "/about" },
+           { label: "Contact Us", path: "/contact" },
+           { label: "Careers", path: "/careers" },
+         ].map(({ label, path }) => (
+           <button
+             key={path}
+             onClick={() => navigate(path)}
+             className="text-gray-700 hover:text-orange-600 font-medium transition-all duration-300 relative group"
+           >
+             {label}
+             <span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
+           </button>
+         ))}
 
-        {/* 👇 6. ADDED conditional logic for the buttons */}
-        {currentUser ? (
-          // --- USER IS LOGGED IN ---
-          <>
-            <button
-              onClick={() => navigate("/orders")} // Or /admin
-              className="text-gray-700 hover:text-orange-600 font-medium transition-all duration-300 relative group"
-            >
-              My Orders
-              <span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-5 py-2.5 rounded-full bg-gray-600 hover:bg-gray-700 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.97] transition-all duration-300"
-            >
-              Log Out
-            </button>
-          </>
-        ) : (
-          // --- USER IS LOGGED OUT ---
-          <button
-            onClick={() => navigate("/signup")}
-            className=" px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold shadow-md hover:shadow-[0_8px_25px_-5px_rgba(255,111,0,0.4)] hover:scale-[1.05] active:scale-[0.97] transition-all duration-300"
-          >
-            Sign Up
-          </button>
-        )}
-      </nav>
+         {currentUser ? (
+           <>
+             <button
+               onClick={() => navigate("/orders")}
+               className="text-gray-700 hover:text-orange-600 font-medium transition-all duration-300 relative group"
+             >
+               My Orders
+               <span className="absolute left-0 bottom-[-4px] w-0 h-[2px] bg-orange-500 transition-all duration-300 group-hover:w-full" />
+             </button>
+             <button
+               onClick={handleLogout}
+               className="px-5 py-2.5 rounded-full bg-gray-600 hover:bg-gray-700 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.97] transition-all duration-300"
+             >
+               Log Out
+             </button>
+           </>
+         ) : (
+           <button
+             onClick={() => navigate("/signup")}
+             className=" px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold shadow-md hover:shadow-[0_8px_25px_-5px_rgba(255,111,0,0.4)] hover:scale-[1.05] active:scale-[0.97] transition-all duration-300"
+           >
+             Sign Up
+           </button>
+         )}
+       </nav>
 
-      {/* 💎 Elevated Hero Card */}
-      <div className="relative flex items-center justify-between w-full rounded-3xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.25)] bg-gradient-to-r from-[#fffdfc] via-[#fff8f3] to-[#fff4ef] border border-orange-100/40 backdrop-blur-sm px-10 py-12">
+       {/* 💎 Elevated Hero Card */}
+       <div className="relative flex items-center justify-between w-full rounded-3xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.25)] bg-gradient-to-r from-[#fffdfc] via-[#fff8f3] to-[#fff4ef] border border-orange-100/40 backdrop-blur-sm px-10 py-12">
         {/* 🖼 Left: Carousel */}
         <div className="w-1/2 rounded-2xl overflow-hidden shadow-[0_8px_30px_-8px_rgba(0,0,0,0.3)] relative">
           <Carousel
@@ -174,6 +149,9 @@ const HeroSectionDesktop = () => {
                   <img
                     src={src}
                     alt={`Hero ${index + 1}`}
+                    // 5. 👇 PRIORITY TAGS (The most important part)
+                    fetchpriority={index === 0 ? "high" : "auto"}
+                    loading={index === 0 ? "eager" : "lazy"}
                     className="w-full h-[500px] object-cover transition-transform duration-700 hover:scale-105"
                   />
                 </CarouselItem>
