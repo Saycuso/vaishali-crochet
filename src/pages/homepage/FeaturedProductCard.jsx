@@ -32,6 +32,9 @@ export const FeaturedProductCard = ({ product }) => {
           <img
             src={imageUrl || "https://placehold.co/400x300?text=No+Image"}
             alt={name} // Alt tag will also use the main product name
+            loading="lazy"          // 👈 ADD THIS
+            decoding="async"        // 👈 ADD THIS
+            width="300"             // 👈 Try to add explicit width/height to prevent layout shift
             className="w-full h-64 object-cover block transition-transform duration-300 group-hover:scale-105"
           />
         </div>
