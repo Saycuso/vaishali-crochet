@@ -29,7 +29,7 @@ export const FeaturedProductCard = ({ product }) => {
     <Link to={`/shop/${product.id}`} className="group block">
       <Card className="rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h-full">
         {/* Image */}
-        <div className="overflow-hidden bg-gray-100 relative">
+       <div className="overflow-hidden bg-gray-100 relative h-64 w-full">
           <OptimizedCloudinaryImage
              src={imageUrl || "https://placehold.co/400x300?text=No+Image"}
              alt={name}

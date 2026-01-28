@@ -180,7 +180,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
       )}
 
       {/* Product Image */}
-      <div className="overflow-hidden relative rounded-t-2xl">
+      <div className="overflow-hidden relative rounded-t-2xl h-64 w-full bg-gray-100">
         <OptimizedCloudinaryImage
           src={imageUrl}
           alt={product.name}
