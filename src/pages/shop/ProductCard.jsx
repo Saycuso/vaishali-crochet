@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Heart, Star } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "@/firebase";
@@ -20,6 +15,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import OptimizedCloudinaryImage from "@/components/custom/OptimizedCloudinaryImage";
 import { useNavigate } from "react-router-dom";
 
 export const ProductCard = ({ product, showWishlistButton = true }) => {
@@ -30,7 +26,11 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
   const [avgRating, setAvgRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const calculateTotalStock = (product) => {
-    if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+    if (
+      product.variants &&
+      Array.isArray(product.variants) &&
+      product.variants.length > 0
+    ) {
       // It's a VARIABLE product. Sum the stock of all variants.
       return product.variants.reduce((total, variant) => {
         return total + (variant.stockQuantity || 0); // Add each variant's stock
@@ -39,7 +39,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
     // It's a SIMPLE product. Use the top-level stock.
     return product.stockQuantity || 0;
   };
-  
+
   const totalStock = calculateTotalStock(product);
 
   const imageUrl =
@@ -52,7 +52,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
 
   const discountPercent = hasDiscount
     ? Math.round(
-        ((product.originalprice - product.price) / product.originalprice) * 100
+        ((product.originalprice - product.price) / product.originalprice) * 100,
       )
     : 0;
 
@@ -69,7 +69,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
         if (fetchedReviews.length > 0) {
           const total = fetchedReviews.reduce(
             (sum, review) => sum + (review.rating || 0),
-            0
+            0,
           );
           setAvgRating((total / fetchedReviews.length).toFixed(1));
           setReviewCount(fetchedReviews.length);
@@ -98,7 +98,7 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
         try {
           const docSnap = await getDoc(wishlistRef);
           setIsWishlisted(
-            docSnap.exists() && docSnap.data().items?.includes(product.id)
+            docSnap.exists() && docSnap.data().items?.includes(product.id),
           );
         } catch (error) {
           console.error("Error checking wishlist:", error);
@@ -181,14 +181,14 @@ export const ProductCard = ({ product, showWishlistButton = true }) => {
 
       {/* Product Image */}
       <div className="overflow-hidden relative rounded-t-2xl">
-        <img
+        <OptimizedCloudinaryImage
           src={imageUrl}
           alt={product.name}
-          loading="lazy"  
-          decoding="async" 
+          width="400"
+          height="300" // Aspect ratio approx 4:3
           className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        {totalStock  === 0 && (
+        {totalStock === 0 && (
           <CardTitle className="absolute inset-0 bg-black/50 text-white font-bold flex items-center justify-center text-base">
             Out of Stock
           </CardTitle>

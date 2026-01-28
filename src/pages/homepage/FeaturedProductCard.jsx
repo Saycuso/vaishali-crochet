@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
+import OptimizedCloudinaryImage from "@/components/custom/OptimizedCloudinaryImage";
 
 export const FeaturedProductCard = ({ product }) => {
   // Check for variants to get the right image
@@ -28,14 +29,14 @@ export const FeaturedProductCard = ({ product }) => {
     <Link to={`/shop/${product.id}`} className="group block">
       <Card className="rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h-full">
         {/* Image */}
-        <div className="overflow-hidden">
-          <img
-            src={imageUrl || "https://placehold.co/400x300?text=No+Image"}
-            alt={name} // Alt tag will also use the main product name
-            loading="lazy"          // 👈 ADD THIS
-            decoding="async"        // 👈 ADD THIS
-            width="300"             // 👈 Try to add explicit width/height to prevent layout shift
-            className="w-full h-64 object-cover block transition-transform duration-300 group-hover:scale-105"
+        <div className="overflow-hidden bg-gray-100 relative">
+          <OptimizedCloudinaryImage
+             src={imageUrl || "https://placehold.co/400x300?text=No+Image"}
+             alt={name}
+             // 3. Set explicit dimensions (Matches the aspect ratio of h-64 approx)
+             width="400" 
+             height="300"
+             className="w-full h-64 object-cover block transition-transform duration-300 group-hover:scale-105"
           />
         </div>
 
