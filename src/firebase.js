@@ -19,12 +19,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// 👇 2. INITIALIZE APP CHECK
-// This code reads the Site Key from your .env file
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
-  isTokenAutoRefreshEnabled: true, // Automatically refreshes the token
-});
+// 👇 ONLY enable App Check in production
+let appCheck;
 
-// 👇 3. EXPORT APPCHECK
+if (import.meta.env.PROD) {
+  appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(
+      import.meta.env.VITE_RECAPTCHA_SITE_KEY
+    ),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 export { app, db, auth, appCheck };
