@@ -5,6 +5,7 @@ import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
+import WhatsAppButton from "@/components/custom/WhatsAppButton";
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -125,6 +126,7 @@ const Shop = () => {
           </Link>
         ))}
       </div>
+      <WhatsAppButton />
     </div>
   );
 };

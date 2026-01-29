@@ -8,6 +8,7 @@ import ProductImageGallery from "@/components/ProductImageGallery";
 import ProductReviewSection from "./ProductReviewes";
 import ProductInfo from "./ProductInfo";
 import ProductDetails from "./ProductDetails.";
+import WhatsAppButton from "@/components/custom/WhatsAppButton";
 
 const ProductPage = () => {
   const { productId } = useParams();
@@ -104,6 +105,7 @@ const ProductPage = () => {
     
       <ProductReviewSection
       productId={productId}/>
+      <WhatsAppButton productName={selectedVariant.name || product.name} />
     </div>
   );
 };

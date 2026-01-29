@@ -3,9 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/hooks/useCartStore";
 import LOGO from "@/data/Logo/forcrochetwebsite.png";
-import { app, db } from "@/firebase"; // 👈 1. ADD 'db' IMPORT
+import { app } from "@/firebase";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore"; // 👈 2. IMPORT FIRESTORE LISTENERS
 import {
   Sheet,
   SheetContent,
@@ -23,67 +22,42 @@ import {
   LogOut,
   LogIn,
   Heart,
-  Shield, 
+  Shield, // 👈 1. IMPORTED ADMIN ICON
 } from "lucide-react";
-import ADMIN_UIDS from "@/config/adminConfig"; 
+import ADMIN_UIDS from "@/config/adminConfig"; // 👈 2. IMPORTED ADMIN LIST
 
 const auth = getAuth(app);
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [wishlistCount, setWishlistCount] = useState(0); // 👈 3. ENABLE SETTER
+  const [isAdmin, setIsAdmin] = useState(false); // 👈 3. NEW STATE FOR ADMIN
+  const [wishlistCount] = useState(0);
   const location = useLocation();
   const { toggleCart, cartItems, clearCart } = useCartStore();
 
   useEffect(() => {
-    // Variable to hold the unsubscribe function for the wishlist listener
-    let unsubscribeWishlist = () => {};
-
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsLoggedIn(!!user);
       
-      if (user) {
-        // --- ADMIN CHECK ---
-        if (ADMIN_UIDS.includes(user.uid)) {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-        }
-
-        // --- 🛠️ 4. REAL-TIME WISHLIST LISTENER ---
-        // This listens to the 'wishlist' collection for this user
-        const wishlistRef = doc(db, "wishlist", user.uid);
-        unsubscribeWishlist = onSnapshot(wishlistRef, (docSnap) => {
-          if (docSnap.exists()) {
-            // Count how many items are in the array
-            const items = docSnap.data().items || [];
-            setWishlistCount(items.length);
-          } else {
-            setWishlistCount(0);
-          }
-        });
-
+      // --- 🛠️ 4. CHECK IF USER IS ADMIN ---
+      if (user && ADMIN_UIDS.includes(user.uid)) {
+        setIsAdmin(true);
       } else {
-        // User logged out
         setIsAdmin(false);
-        setWishlistCount(0);
-        unsubscribeWishlist(); // Stop listening
       }
+      // ---------------------------------
+      
+      console.log(`Auth state changed. Logged in: ${!!user}`);
     });
-
-    return () => {
-      unsubscribeAuth();
-      unsubscribeWishlist();
-    };
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
       clearCart();
-      setWishlistCount(0); // Reset count on logout
+      console.log("User logged out successfully.");
       setIsOpen(false);
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -98,18 +72,21 @@ const Navbar = () => {
     { name: "Orders And Tracking", path: "/orderstrackingpage", icon: Package },
   ];
   
+  // --- 🛠️ 5. CREATE THE FULL NAV LIST (with admin links) ---
   const navItems = [
     ...baseNavItems,
+    // Add admin links only if the user is an admin
     ...(isAdmin ? [
         { name: "Admin Orders", path: "/admin/orders", icon: Shield },
         { name: "Admin Products", path: "/admin/products", icon: Shield },
       ] : [])
   ];
+  // -----------------------------------------------------
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-40">
       <nav className="mx-auto p-1 flex justify-between items-center">
-        {/* Mobile Menu */}
+        {/* ================= Mobile Menu ================= */}
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -149,7 +126,9 @@ const Navbar = () => {
                 </SheetDescription>
               </SheetHeader>
 
+              {/* Navigation links */}
               <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+                {/* --- 🛠️ 6. USE THE NEW 'navItems' LIST --- */}
                 {navItems.map((item) => { 
                   const isActive = location.pathname === item.path;
                   const isAdminLink = item.name.startsWith("Admin");
@@ -158,12 +137,13 @@ const Navbar = () => {
                       key={item.name}
                       to={item.path}
                       onClick={() => setIsOpen(false)}
+                      // 🛠️ 7. Style admin links differently
                       className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition-all duration-200 ${
                         isActive
                           ? "bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 shadow-sm border border-orange-200"
                           : isAdminLink 
-                          ? "text-purple-700 hover:bg-purple-50 hover:text-purple-900"
-                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          ? "text-purple-700 hover:bg-purple-50 hover:text-purple-900" // Admin link style
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900" // Regular link style
                       }`}
                     >
                       <item.icon
@@ -177,6 +157,7 @@ const Navbar = () => {
                 })}
               </nav>
 
+              {/* Auth Section */}
               <div className="mt-auto border-t p-4">
                 {isLoggedIn ? (
                   <Button
@@ -202,14 +183,15 @@ const Navbar = () => {
           </Sheet>
         </div>
 
-        {/* Logo */}
+        {/* ================= Logo ================= */}
         <Link to="/" className="text-2xl font-bold text-gray-800">
           <img src={LOGO} className="h-10 w-auto ml-5" alt="Logo" />
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* ================= Desktop Navigation ================= */}
         <div className="max-md:hidden">
           <div className="flex gap-10 lg:gap-20">
+            {/* --- 🛠️ 8. USE THE NEW 'navItems' LIST --- */}
             {navItems.map((item) => ( 
               <Link
                 key={item.name}
@@ -218,8 +200,8 @@ const Navbar = () => {
                   location.pathname === item.path
                     ? "font-semibold text-gray-900"
                     : item.name.startsWith("Admin")
-                    ? "text-purple-700 hover:text-purple-900"
-                    : "text-gray-600 hover:text-gray-800"
+                    ? "text-purple-700 hover:text-purple-900" // Admin style
+                    : "text-gray-600 hover:text-gray-800" // Regular style
                 }`}
               >
                 {item.name}
@@ -228,7 +210,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Right Side: Wishlist + Cart */}
+        {/* ================= Right Side: Wishlist + Cart ================= */}
         <div className="flex gap-2 items-center mr-2">
           {isLoggedIn ? (
             <Link to="/wishlist">
@@ -239,7 +221,6 @@ const Navbar = () => {
                 className="relative"
               >
                 <Heart className="h-5 w-5 text-red-500" />
-                {/* 🛠️ 5. THIS BADGE NOW WORKS */}
                 {wishlistCount > 0 && (
                   <span className="absolute top-0 right-0 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                     {wishlistCount > 9 ? "9+" : wishlistCount}
