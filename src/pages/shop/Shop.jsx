@@ -6,6 +6,7 @@ import { collection, getDocs } from "firebase/firestore";
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import WhatsAppButton from "@/components/custom/WhatsAppButton";
+import { Helmet } from "react-helmet-async";
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
@@ -81,6 +82,10 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50  to-pink-100 py-10 px-4 md:px-10">
+      <Helmet>
+      <title>Shop | Vaishali's Crochet</title>
+      <meta name="description" content="Browse our handcrafted crochet collection. Made with love in India." />
+    </Helmet>
       {/* 🧶 Header Section */}
       <div className="text-center mb-10">
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800">

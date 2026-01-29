@@ -64,8 +64,7 @@ const ProductPage = () => {
       </div>
     );
   }
-
- // ... (inside ProductPage.js)
+  // ... (inside ProductPage.js)
 
   return (
     <div className="mx-auto p-4 max-w-8xl">
@@ -77,8 +76,8 @@ const ProductPage = () => {
             productName={selectedVariant.name}
           />
         </div>
- <div className="md:col-span-2">
-        {/* Variant Selector */}
+        <div className="md:col-span-2">
+          {/* Variant Selector */}
           {product.variants && (
             <div className="">
               <VariantSelector
@@ -89,22 +88,20 @@ const ProductPage = () => {
             </div>
           )}
 
-        {/* Product info, prices, and actions */}
-        <ProductInfo
-          product={product}
-          selectedVariant={selectedVariant}
-          setSelectedVariant={setSelectedVariant}
-          productId={productId}
-        />
-        <Separator className="my-0" />
-      <ProductDetails product={product} />
-
-      </div>
+          {/* Product info, prices, and actions */}
+          <ProductInfo
+            product={product}
+            selectedVariant={selectedVariant}
+            setSelectedVariant={setSelectedVariant}
+            productId={productId}
+          />
+          <Separator className="my-0" />
+          <ProductDetails product={product} />
+        </div>
       </div>
       <Separator className="m-12" />
-    
-      <ProductReviewSection
-      productId={productId}/>
+
+      <ProductReviewSection productId={productId} />
       <WhatsAppButton productName={selectedVariant.name || product.name} />
     </div>
   );

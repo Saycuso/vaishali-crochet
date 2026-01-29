@@ -2,6 +2,7 @@ import React, { Suspense } from "react"; // 👈 Import React & Suspense
 import HeroSection from "@/components/custom/HeroSection";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 // 1. 👇 LAZY LOAD HEAVY COMPONENTS (The Secret Sauce)
 // This tells React: "Don't download this code until the user actually needs it."
@@ -20,6 +21,10 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col items-center justify-center w-full overflow-x-hidden">
+      <Helmet>
+        <title>Handmade Crochet by Vaishali | Home</title>
+        <meta name="description" content="Unique handmade crochet gifts, decor, and accessories. Crafted with love in India." />
+      </Helmet>
       {/* 1️⃣ Hero Section (EAGER LOAD) */}
       {/* We keep this normal because it's the first thing the user sees */}
       <HeroSection />
